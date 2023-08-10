@@ -70,7 +70,7 @@ public final class GiveCommand implements CommandItemCommand {
                             player.getInventory().addItem(convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))));
                         }
 
-                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<gray><player>に<white><display_name></white>を<amount>個与えました</gray>",
+                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<white><player>に<white><display_name></white>を<amount>個与えました</white>",
                                 Placeholder.parsed("player", player.getName()),
                                 Placeholder.component("display_name", convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))).displayName()),
                                 Formatter.number("amount", amount)
