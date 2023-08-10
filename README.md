@@ -9,6 +9,7 @@ by-console-commands {
     ]
 }
 by-player-commands=[]
+can-place=false
 display-name="<b><gradient:#257000:#55ff00>もりーぱいつもありがとう!</b>"
 item {
     item-meta {
@@ -23,6 +24,5 @@ lore=[
 ]
 un-stackable=false
 usage-counts=1
-```/
 
 
