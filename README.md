@@ -23,6 +23,5 @@ lore=[
 ]
 un-stackable=false
 usage-counts=1
-```/
 
 
