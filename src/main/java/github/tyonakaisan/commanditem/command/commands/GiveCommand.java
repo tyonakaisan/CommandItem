@@ -68,8 +68,14 @@ public final class GiveCommand implements CommandItemCommand {
                     players.getPlayers().forEach(player -> {
 
                         var item = convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)));
-                        item.setAmount(amount);
-                        player.getInventory().addItem(item);
+                        if (this.commandItemRegistry.get(key).unStackable()) {
+                            for (int i = 0; i < amount; i++) {
+                                player.getInventory().addItem(convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))));
+                            }
+                        } else {
+                            item.setAmount(amount);
+                            player.getInventory().addItem(item);
+                        }
 
                         sender.sendMessage(MiniMessage.miniMessage().deserialize("<white><player>に<white><display_name></white>を<amount>個与えました</white>",
                                 Placeholder.parsed("player", player.getName()),
