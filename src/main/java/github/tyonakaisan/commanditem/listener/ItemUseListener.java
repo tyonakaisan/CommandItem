@@ -2,14 +2,13 @@ package github.tyonakaisan.commanditem.listener;
 
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.CommandItem;
-import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
+import github.tyonakaisan.commanditem.item.Convert;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
@@ -50,11 +49,7 @@ public final class ItemUseListener implements Listener {
                 case PHYSICAL -> action = "PHYSICAL";
             }
 
-            if (event.getHand() == EquipmentSlot.HAND) {
-                player.getInventory().setItemInMainHand(convert.reduceUsageCounts(item, action));
-            } else {
-                player.getInventory().setItemInOffHand(convert.reduceUsageCounts(item, action));
-            }
+            convert.setPlayerHandItem(player, event.getHand(), item, action);
             convert.executeCommand(itemRecord, player, action);
         }
     }

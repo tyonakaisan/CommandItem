@@ -13,6 +13,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -80,6 +81,15 @@ public final class Convert {
             }
         }
         return item;
+    }
+
+    public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, String action) {
+        if (equipmentSlot == null) return;
+        if (equipmentSlot == EquipmentSlot.HAND) {
+            player.getInventory().setItemInMainHand(reduceUsageCounts(item, action));
+        } else {
+            player.getInventory().setItemInOffHand(reduceUsageCounts(item, action));
+        }
     }
 
     public ItemStack toItemStack(ItemRecord itemRecord) {
