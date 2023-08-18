@@ -7,7 +7,6 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
-import github.tyonakaisan.commanditem.item.registry.Registry;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;

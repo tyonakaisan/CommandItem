@@ -1,4 +1,4 @@
-package github.tyonakaisan.commanditem.item.registry;
+package github.tyonakaisan.commanditem.item;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;

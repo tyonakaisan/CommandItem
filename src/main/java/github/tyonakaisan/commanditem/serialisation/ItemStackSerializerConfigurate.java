@@ -11,11 +11,15 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.codehaus.plexus.util.Base64;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -34,6 +38,8 @@ public final class ItemStackSerializerConfigurate implements TypeSerializer<Item
     private static final String UNBREAKABLE = "unbreakable";
     private static final String ENCHANTMENTS = "enchantments";
     private static final String SKULL_TEXTURE = "skull-texture";
+    private static final String SHULKER_BOX = "shulker-box";
+
     @Inject
     public ItemStackSerializerConfigurate(final ComponentLogger logger) {
         this.logger = logger;
@@ -66,11 +72,13 @@ public final class ItemStackSerializerConfigurate implements TypeSerializer<Item
             var enchantmentsNode = metaNode.node(ENCHANTMENTS);
             if (!enchantmentsNode.isNull()) {
                 var enchantments = Objects.requireNonNull(enchantmentsNode.getList(EnchantmentSerializerConfigurate.Enchant.class));
-                enchantments.forEach(enchant ->
-                        itemMeta.addEnchant(
-                                enchant.enchantment(),
-                                enchant.level(),
-                                true)
+                enchantments.forEach(enchantment -> enchantment.enchantMap().keySet()
+                        .forEach(enchant ->
+                                itemMeta.addEnchant(
+                                        enchant,
+                                        enchantment.enchantMap().get(enchant),
+                                        true)
+                                )
                 );
             }
 
@@ -100,12 +108,36 @@ public final class ItemStackSerializerConfigurate implements TypeSerializer<Item
 
             var meta = obj.getItemMeta();
             var metaNode = node.node(ITEM_META);
-            metaNode.node(DISPLAY_NAME).set(meta.displayName());
-            metaNode.node(LORE).set(meta.lore());
-            metaNode.node(CUSTOM_MODEL_DATA).set(meta.getCustomModelData());
-            metaNode.node(UNBREAKABLE).set(meta.isUnbreakable());
 
-            // TODO: スカルメタとか。そもそもシリアライズする事ないけど、、、。
+            /*
+            if (meta.hasDisplayName()) {
+                var displayName = MiniMessage.miniMessage().serialize(Objects.requireNonNull(meta.displayName()));
+                node.node(DISPLAY_NAME).set(displayName);
+            }
+             */
+
+            //var loreNode = node.node(LORE);
+            //if (!loreNode.isNull()) metaNode.node(LORE).set(meta.lore());
+
+            if (meta.hasCustomModelData()) metaNode.node(CUSTOM_MODEL_DATA).set(meta.getCustomModelData());
+
+            if (meta.isUnbreakable()) metaNode.node(UNBREAKABLE).set(meta.isUnbreakable());
+
+            if (meta.hasEnchants()) {
+                Map<String, Integer> enchantMap = new HashMap<>();
+                meta.getEnchants().forEach((enchant, level) -> {
+                    var enchantKey = enchant.getKey() ;
+                    enchantMap.put(enchantKey.toString().replace("minecraft:", ""), level);
+                });
+                metaNode.node(ENCHANTMENTS).set(enchantMap);
+            }
+
+            if (meta instanceof SkullMeta skullMeta && skullMeta.hasOwner()) {
+                String url = Objects.requireNonNull(Objects.requireNonNull(skullMeta.getPlayerProfile()).getTextures().getSkin()).toString();
+                byte[] encodeData = Base64.encodeBase64(String.format("{textures:{SKIN:{url:\"%s\"}}}", url).getBytes());
+                String encodeString = new String(encodeData, StandardCharsets.UTF_8);
+                metaNode.node(SKULL_TEXTURE).set(encodeString);
+            }
         }
     }
 }

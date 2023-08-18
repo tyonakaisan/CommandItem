@@ -12,15 +12,19 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
+
 
 @DefaultQualifier(NonNull.class)
 public final class EnchantmentSerializerConfigurate implements TypeSerializer<EnchantmentSerializerConfigurate.Enchant> {
 
     private final ComponentLogger logger;
 
-    private static final String ENCHANTMENT = "enchantment";
+    private static final String ITEM_META = "item-meta";
+    private static final String ENCHANTMENT = "enchantments";
     private static final String LEVEL = "level";
 
     @Inject
@@ -30,13 +34,19 @@ public final class EnchantmentSerializerConfigurate implements TypeSerializer<En
 
     @Override
     public Enchant deserialize(final Type type, final ConfigurationNode node) {
-        var enchantmentNode = node.node(ENCHANTMENT);
-        var enchantmentKey = NamespacedKey.minecraft(requireNonNull(enchantmentNode.getString()));
+        Map<Enchantment, Integer> enchantMap = new HashMap<>();
+        Enchant enchant = new Enchant(enchantMap);
 
-        var enchantment = requireNonNull(Enchantment.getByKey(enchantmentKey));
-        int amount = node.node(LEVEL).getInt(1);
+        for (ConfigurationNode enchantMapNode : node.childrenMap().values()) {
+            var enchantName = requireNonNull(enchantMapNode.key()).toString();
+            var level = enchantMapNode.getInt(1);
 
-        return new Enchant(enchantment, amount);
+            var enchantmentKey = NamespacedKey.minecraft(requireNonNull(enchantName));
+            var enchantment = requireNonNull(Enchantment.getByKey(enchantmentKey));
+            enchantMap.put(enchantment, level);
+            enchant = new Enchant(enchantMap);
+        }
+        return enchant;
     }
 
     @Override
@@ -44,13 +54,15 @@ public final class EnchantmentSerializerConfigurate implements TypeSerializer<En
         if (obj == null) {
             node.set(null);
         } else {
-            node.node(ENCHANTMENT).set(obj.enchantment());
-            node.node(LEVEL).set(obj.level());
+            var meta = obj.enchantMap;
+            System.out.println(meta.keySet());
+            System.out.println(meta.values());
+            node.set("a");
         }
     }
 
     @DefaultQualifier(NonNull.class)
-    public record Enchant(Enchantment enchantment, int level) {
+    public record Enchant(Map<Enchantment, Integer> enchantMap) {
 
     }
 }

@@ -3,6 +3,7 @@ package github.tyonakaisan.commanditem.config;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.primary.PrimaryConfig;
+import github.tyonakaisan.commanditem.serialisation.EnchantmentSerializerConfigurate;
 import github.tyonakaisan.commanditem.serialisation.ItemStackSerializerConfigurate;
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
 import org.bukkit.inventory.ItemStack;
@@ -24,16 +25,19 @@ public class ConfigFactory {
     private final Path dataDirectory;
 
     private final ItemStackSerializerConfigurate itemStackSerializer;
+    private final EnchantmentSerializerConfigurate enchantmentSerializer;
 
     private @Nullable PrimaryConfig primaryConfig = null;
 
     @Inject
     public ConfigFactory(
             final Path dataDirectory,
-            final ItemStackSerializerConfigurate itemStackSerializer
+            final ItemStackSerializerConfigurate itemStackSerializer,
+            final EnchantmentSerializerConfigurate enchantmentSerializer
             ) {
         this.dataDirectory = dataDirectory;
         this.itemStackSerializer = itemStackSerializer;
+        this.enchantmentSerializer = enchantmentSerializer;
     }
 
     public @Nullable PrimaryConfig reloadPrimaryConfig() {
@@ -64,7 +68,8 @@ public class ConfigFactory {
                     return opts.shouldCopyDefaults(true).serializers(serializerBuilder ->
                             serializerBuilder
                                     .registerAll(serializer.serializers())
-                                    .register(ItemStack.class, itemStackSerializer)
+                                    .register(ItemStack.class, this.itemStackSerializer)
+                                    .register(EnchantmentSerializerConfigurate.Enchant.class, this.enchantmentSerializer)
                     );
                 })
                 .path(file)

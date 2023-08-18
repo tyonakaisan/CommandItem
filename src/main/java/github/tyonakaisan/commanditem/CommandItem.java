@@ -3,6 +3,7 @@ package github.tyonakaisan.commanditem;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
+import github.tyonakaisan.commanditem.command.commands.ConvertCommand;
 import github.tyonakaisan.commanditem.command.commands.GiveCommand;
 import github.tyonakaisan.commanditem.command.commands.ReloadCommand;
 import github.tyonakaisan.commanditem.listener.ItemUseListener;
@@ -23,7 +24,8 @@ public final class CommandItem extends JavaPlugin {
     );
     private static final Set<Class<? extends CommandItemCommand>> COMMAND_CLASSES = Set.of(
             ReloadCommand.class,
-            GiveCommand.class
+            GiveCommand.class,
+            ConvertCommand.class
     );
     private final Injector injector;
 

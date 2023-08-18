@@ -70,6 +70,8 @@ public final class Convert {
                 && (itemRecord.byPlayerCommands().containsKey(action) || itemRecord.byConsoleCommands().containsKey(action))) {
             int counts = Objects.requireNonNull(pdc.get(commandItemUsageCountsKey, PersistentDataType.INTEGER)) - 1;
 
+            if (counts <= -1) return item;
+
             item.editMeta(meta -> meta.getPersistentDataContainer().set(commandItemUsageCountsKey, PersistentDataType.INTEGER, counts));
 
             if (counts == 0) {
