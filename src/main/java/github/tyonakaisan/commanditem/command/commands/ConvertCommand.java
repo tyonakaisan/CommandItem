@@ -8,11 +8,9 @@ import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.Convert;
-import github.tyonakaisan.commanditem.item.config.ItemConfigFactory;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
@@ -26,7 +24,6 @@ public final class ConvertCommand implements CommandItemCommand {
     private final CommandItemRegistry commandItemRegistry;
     private final Convert convert;
     private final CommandManager<CommandSender> commandManager;
-    private final ItemConfigFactory itemConfigFactory;
 
     @Inject
     public ConvertCommand(
@@ -34,16 +31,15 @@ public final class ConvertCommand implements CommandItemCommand {
             final ConfigFactory configFactory,
             final CommandItemRegistry commandItemRegistry,
             final Convert convert,
-            final CommandManager<CommandSender> commandManager,
-            final ItemConfigFactory itemConfigFactory
+            final CommandManager<CommandSender> commandManager
     ) {
         this.commandItem = commandItem;
         this.configFactory = configFactory;
         this.commandItemRegistry = commandItemRegistry;
         this.convert = convert;
         this.commandManager = commandManager;
-        this.itemConfigFactory = itemConfigFactory;
     }
+
 
     @Override
     public void init() {
@@ -53,18 +49,17 @@ public final class ConvertCommand implements CommandItemCommand {
                 .senderType(CommandSender.class)
                 .argument(StringArgument.of("file_name"))
                 .handler(handler -> {
-                    String fileName = handler.get("file_name");
-                    var player = (Player) handler.getSender();
-                    ItemStack item = player.getInventory().getItemInMainHand();
+                    final String fileName = handler.get("file_name");
+                    final var player = (Player) handler.getSender();
+                    final var item = player.getInventory().getItemInMainHand();
 
                     if (item.getType() == Material.AIR) {
                         player.sendRichMessage("<red>This item cannot be converted!</red>");
                         return;
                     }
 
-                    itemConfigFactory.createItemConfig(fileName, item);
-
                     try {
+                        this.commandItemRegistry.createItemConfig(fileName, item);
                         this.commandItemRegistry.reloadItemConfig();
                         player.sendRichMessage("<green>Item converted!</green>");
                     } catch (IOException e) {

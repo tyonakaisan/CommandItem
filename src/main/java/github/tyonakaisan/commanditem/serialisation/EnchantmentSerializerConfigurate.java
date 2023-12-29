@@ -23,10 +23,6 @@ public final class EnchantmentSerializerConfigurate implements TypeSerializer<En
 
     private final ComponentLogger logger;
 
-    private static final String ITEM_META = "item-meta";
-    private static final String ENCHANTMENT = "enchantments";
-    private static final String LEVEL = "level";
-
     @Inject
     public EnchantmentSerializerConfigurate(final ComponentLogger logger) {
         this.logger = logger;
@@ -54,10 +50,6 @@ public final class EnchantmentSerializerConfigurate implements TypeSerializer<En
         if (obj == null) {
             node.set(null);
         } else {
-            var meta = obj.enchantMap;
-            System.out.println(meta.keySet());
-            System.out.println(meta.values());
-            node.set("a");
         }
     }
 

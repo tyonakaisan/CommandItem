@@ -12,11 +12,13 @@ public final class CommandExecutor {
         throw new AssertionError();
     }
 
+    private static final String PLAYER = "<player>";
+
     public static void executeByPlayer(String command, Player player) {
-        player.performCommand(command.replace("<player>", player.getName()));
+        player.performCommand(command.replace(PLAYER, player.getName()));
     }
 
     public static void executeByConsole(String command, Player player) {
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace("<player>", player.getName()));
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace(PLAYER, player.getName()));
     }
 }

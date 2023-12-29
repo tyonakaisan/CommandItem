@@ -48,7 +48,7 @@ public final class GiveCommand implements CommandItemCommand {
                 .permission("commanditem.command.give")
                 .senderType(CommandSender.class)
                 .argument(MultiplePlayerSelectorArgument.of("player"))
-                .argument(commandManager.argumentBuilder(Key.class, "key")
+                .argument(this.commandManager.argumentBuilder(Key.class, "key")
                         .withSuggestionsProvider(
                                 ((context, string) -> {
                                     final Set<Key> allArgs = commandItemRegistry.keySet();
@@ -67,10 +67,10 @@ public final class GiveCommand implements CommandItemCommand {
 
                     players.getPlayers().forEach(player -> {
 
-                        var item = convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)));
-                        if (Objects.requireNonNull(this.commandItemRegistry.get(key)).unStackable()) {
+                        var item = this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)));
+                        if (!Objects.requireNonNull(this.commandItemRegistry.get(key)).stackable()) {
                             for (int i = 0; i < amount; i++) {
-                                player.getInventory().addItem(convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))));
+                                player.getInventory().addItem(this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))));
                             }
                         } else {
                             item.setAmount(amount);
@@ -79,7 +79,7 @@ public final class GiveCommand implements CommandItemCommand {
 
                         sender.sendMessage(MiniMessage.miniMessage().deserialize("<white><player>に<white><display_name></white>を<amount>個与えました</white>",
                                 Placeholder.parsed("player", player.getName()),
-                                Placeholder.component("display_name", convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))).displayName()),
+                                Placeholder.component("display_name", this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))).displayName()),
                                 Formatter.number("amount", amount)
                         ));
                     });

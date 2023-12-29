@@ -9,6 +9,7 @@ import net.kyori.adventure.key.Key;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
+import java.util.Objects;
 import java.util.Queue;
 
 @DefaultQualifier(NonNull.class)
@@ -20,13 +21,11 @@ public final class KeyArgument<C> implements ArgumentParser<C, Key> {
     }
 
     @Override
-    public @NonNull ArgumentParseResult<@NonNull Key> parse(
-            @NonNull CommandContext<@NonNull C> commandContext,
-            @NonNull Queue<@NonNull String> inputQueue
-    ) {
-        final String input = inputQueue.peek();
-        if (input == null)
+    public @NonNull ArgumentParseResult<@NonNull Key> parse(@NonNull CommandContext<@NonNull C> commandContext, @NonNull Queue<@NonNull String> inputQueue) {
+        final String input = Objects.requireNonNull(inputQueue.peek());
+        if (input == null) {
             return ArgumentParseResult.failure(new NoInputProvidedException(KeyArgument.class, commandContext));
+        }
 
         try {
             Key key = Key.key(input);

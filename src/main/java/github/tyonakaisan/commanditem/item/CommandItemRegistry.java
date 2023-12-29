@@ -7,8 +7,10 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
+import github.tyonakaisan.commanditem.config.primary.CommandItemConfig;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -23,27 +25,28 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
 @Singleton
 @DefaultQualifier(NonNull.class)
-public final class CommandItemRegistry implements Registry<Key, ItemRecord> {
+public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
     private final Path dataDirectory;
     private final ConfigFactory configFactory;
     private final ComponentLogger logger;
 
-    private static @MonotonicNonNull ObjectMapper<ItemRecord> mapper;
+    private static @MonotonicNonNull ObjectMapper<CommandsItem> mapper;
 
     static {
         try {
-            mapper = ObjectMapper.factory().get(ItemRecord.class);
+            mapper = ObjectMapper.factory().get(CommandsItem.class);
         } catch (SerializationException e) {
             e.printStackTrace();
         }
     }
 
-    private final BiMap<Key, ItemRecord> registeredItemMap = Maps.synchronizedBiMap(HashBiMap.create());
+    private final BiMap<Key, CommandsItem> registeredItemMap = Maps.synchronizedBiMap(HashBiMap.create());
 
     @Inject
     CommandItemRegistry(
@@ -58,7 +61,36 @@ public final class CommandItemRegistry implements Registry<Key, ItemRecord> {
 
     public void reloadItemConfig() throws IOException {
         this.registeredItemMap.clear();
+        this.logger.info("Reloading items...");
         this.loadItemConfig();
+    }
+
+    public void createItemConfig(final String fileName, final ItemStack itemStack) throws IOException {
+        var itemFilePath = this.dataDirectory.resolve("items");
+
+        if (!Files.exists(itemFilePath)) {
+            Files.createDirectories(itemFilePath);
+        }
+
+        final var file = itemFilePath.resolve(fileName + ".conf");
+        final var loader = this.configFactory.configurationLoader(file);
+
+        try {
+            final var root = loader.load();
+            final CommandItemConfig config = Objects.requireNonNull(root.get(CommandItemConfig.class));
+
+            config.setKey(fileName);
+            config.setItemStack(itemStack);
+
+            root.set(CommandItemConfig.class, config);
+            loader.save(root);
+
+            this.logger.info("Successfully {}.conf file created!", fileName);
+
+        } catch (final ConfigurateException exception) {
+            exception.printStackTrace();
+        }
+
     }
 
     public void loadItemConfig() throws IOException {
@@ -73,32 +105,32 @@ public final class CommandItemRegistry implements Registry<Key, ItemRecord> {
                     .filter(path -> path.toString().endsWith(".conf"))
                     .forEach(itemFile -> {
                         final var fileName = itemFile.getFileName().toString();
-                        final @Nullable ItemRecord itemRecord = this.registerItemFromPath(itemFile);
-                        this.logger.info("Loading {}", fileName);
+                        final @Nullable CommandsItem item = this.registerItemFromPath(itemFile);
 
-                        if (itemRecord == null) {
-                            this.logger.warn("Failed to load file '{}'", fileName);
+                        if (item == null) {
+                            this.logger.warn("Failed to load file {}", fileName);
                         }
                     });
+                this.logger.info("Successfully {} items loaded!", this.registeredItemMap.keySet().size());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private @Nullable ItemRecord registerItemFromPath(final Path path) {
-        final @Nullable ItemRecord itemRecord = this.loadCommandItem(path);
+    private @Nullable CommandsItem registerItemFromPath(final Path path) {
+        final @Nullable CommandsItem item = this.loadCommandItem(path);
 
-        if (itemRecord == null) {
+        if (item == null) {
             return null;
         }
 
-        this.register(itemRecord.key(), itemRecord);
+        this.register(item.key(), item);
 
-        return itemRecord;
+        return item;
     }
 
     @Nullable
-    private ItemRecord loadCommandItem(final Path itemFile) {
+    private CommandsItem loadCommandItem(final Path itemFile) {
         final ConfigurationLoader<?> loader = this.configFactory.configurationLoader(itemFile);
 
         try {
@@ -113,18 +145,18 @@ public final class CommandItemRegistry implements Registry<Key, ItemRecord> {
     }
 
     @Override
-    public @NonNull ItemRecord register(final @NonNull Key key, final @NonNull ItemRecord value) {
+    public @NonNull CommandsItem register(final @NonNull Key key, final @NonNull CommandsItem value) {
         this.registeredItemMap.put(key, value);
         return value;
     }
 
     @Override
-    public @Nullable ItemRecord get(final @NonNull Key key) {
+    public @Nullable CommandsItem get(final @NonNull Key key) {
         return this.registeredItemMap.get(key);
     }
 
     @Override
-    public @Nullable Key key(final @NonNull ItemRecord value) {
+    public @Nullable Key key(final @NonNull CommandsItem value) {
         return this.registeredItemMap.inverse().get(value);
     }
 
@@ -134,12 +166,12 @@ public final class CommandItemRegistry implements Registry<Key, ItemRecord> {
     }
 
     @Override
-    public @NonNull Set<ItemRecord> valueSet() {
+    public @NonNull Set<CommandsItem> valueSet() {
         return Collections.unmodifiableSet(this.registeredItemMap.values());
     }
 
     @Override
-    public @NonNull Iterator<ItemRecord> iterator() {
+    public @NonNull Iterator<CommandsItem> iterator() {
         return Iterators.unmodifiableIterator(this.registeredItemMap.values().iterator());
     }
 }
