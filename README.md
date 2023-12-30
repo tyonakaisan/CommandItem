@@ -3,26 +3,49 @@
 ## Example
 
 ```hocon:sample
+# Specifies the command to be executed from console
 by-console-commands {
     "RIGHT_CLICK"=[
-        "minecraft:give <player> minecraft:diamond 1"
+        {
+            action=COMMAND
+            commands=[
+                "minecraft:give <player> gold_ingot",
+                "minecraft:give <player> iron_ingot"
+            ]
+            delay=0
+            period=0
+            repeat=0
+        },
+        {
+            action=MESSAGE
+            commands=[
+                "<gold>iine!"
+            ]
+        },
+        {
+            action="BROAD_CAST"
+            commands=[
+                "<aqua>broadcast message!"
+            ]
+        }
     ]
 }
-by-player-commands=[]
-can-place=false
-display-name="<b><gradient:#257000:#55ff00>もりーぱいつもありがとう!</b>"
-item {
-    item-meta {
-        skull-texture="e3RleHR1cmVzOntTS0lOOnt1cmw6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYjUwMTBjZDc5NmZiZjNmNzUyNzc5ODA4M2E5MzBjYmQzMWEyNzJlNmZjMzAzN2NlZjMyNzQ0YTQzMmRlZWVkZCJ9fX0="
-    }
-    material="PLAYER_HEAD"
+# Specifies the command to be executed from player
+by-player-commands {}
+# ##### Experimental features ######
+# ##### DO NOT EDIT THE SECTIONS "v", "==", "meta-type", "PublicBukkitValues" #####
+# Some items may not convert correctly or may be missing data
+# If such a thing happens, it cannot be saved file
+item-stack {
+    type=SHEARS
+    v=3578
 }
+# ##### DO NOT EDIT THIS SECTION #####
 key="command_item:test"
-lore=[
-    "もりーぱいつもありがとう!",
-    "^_^b"
-]
-un-stackable=false
-usage-counts=1
+# The command can be executed as many times as specified in this field
+# Entering a number below 0 disables this feature
+max-uses=0
+placeable=true
+stackable=true
 
 
