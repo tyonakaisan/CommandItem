@@ -40,4 +40,13 @@ public final class CommandExecutor {
     public static void executeMessage(CustomCommand customCommand, Player player) {
         customCommand.commands().forEach(message -> executeMessage(message, player));
     }
+
+    public static void executeBroadCast(String message) {
+        var component = MiniMessage.miniMessage().deserialize(message);
+        Bukkit.getServer().broadcast(component);
+    }
+
+    public static void executeBroadCast(CustomCommand customCommand) {
+        customCommand.commands().forEach(CommandExecutor::executeBroadCast);
+    }
 }

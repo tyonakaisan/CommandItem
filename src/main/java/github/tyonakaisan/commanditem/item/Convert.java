@@ -132,6 +132,7 @@ public final class Convert {
                 switch (customCommand.action()) {
                     case COMMAND -> CommandExecutor.executeByPlayer(customCommand, player);
                     case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                    case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand);
                 }
 
                 if (count >= customCommand.repeat()) this.cancel();
@@ -148,6 +149,7 @@ public final class Convert {
                 switch (customCommand.action()) {
                     case COMMAND -> CommandExecutor.executeByConsole(customCommand, player);
                     case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                    case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand);
                 }
 
                 if (count >= customCommand.repeat()) this.cancel();
