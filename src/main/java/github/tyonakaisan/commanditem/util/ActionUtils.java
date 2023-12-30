@@ -26,4 +26,11 @@ public final class ActionUtils {
             };
         }
     }
+
+    @SuppressWarnings("unused")
+    public enum CommandAction {
+        COMMAND,
+        MESSAGE,
+        BROAD_CAST
+    }
 }

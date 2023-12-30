@@ -18,8 +18,8 @@ public record CommandsItem(
         int maxUses,
         boolean stackable,
         boolean placeable,
-        Map<ActionUtils.ItemAction, List<String>> byPlayerCommands,
-        Map<ActionUtils.ItemAction, List<String>> byConsoleCommands
+        Map<ActionUtils.ItemAction, List<CustomCommand>> byPlayerCommands,
+        Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands
 ) {
     @Override
     public boolean equals(Object obj) {

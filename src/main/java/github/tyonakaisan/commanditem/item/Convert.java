@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -21,11 +22,15 @@ import org.intellij.lang.annotations.Subst;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @Singleton
 @DefaultQualifier(NonNull.class)
 public final class Convert {
+
     private final Path dataDirectory;
     private final CommandItem commandItem;
     private final CommandItemRegistry commandItemRegistry;
@@ -111,13 +116,42 @@ public final class Convert {
     }
 
     public void executeCommand(CommandsItem item, Player player, ActionUtils.ItemAction itemAction) {
-        List<String> byPlayerCommands = item.byPlayerCommands().get(itemAction) != null ?
+        List<CustomCommand> byPlayerCommands = item.byPlayerCommands().get(itemAction) != null ?
                 Lists.newArrayList(item.byPlayerCommands().get(itemAction)) : Collections.emptyList();
 
-        List<String> byConsoleCommands = item.byConsoleCommands().get(itemAction) != null ?
+        List<CustomCommand> byConsoleCommands = item.byConsoleCommands().get(itemAction) != null ?
                 Lists.newArrayList(item.byConsoleCommands().get(itemAction)) : Collections.emptyList();
 
-        byPlayerCommands.forEach(command -> CommandExecutor.executeByPlayer(command, player));
-        byConsoleCommands.forEach(command -> CommandExecutor.executeByConsole(command, player));
+        byPlayerCommands.forEach(customCommand -> new BukkitRunnable() {
+            int count = 0;
+
+            @Override
+            public void run() {
+                count++;
+
+                switch (customCommand.action()) {
+                    case COMMAND -> CommandExecutor.executeByPlayer(customCommand, player);
+                    case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                }
+
+                if (count >= customCommand.repeat()) this.cancel();
+            }
+        }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
+
+        byConsoleCommands.forEach(customCommand -> new BukkitRunnable() {
+            int count = 0;
+
+            @Override
+            public void run() {
+                count++;
+
+                switch (customCommand.action()) {
+                    case COMMAND -> CommandExecutor.executeByConsole(customCommand, player);
+                    case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                }
+
+                if (count >= customCommand.repeat()) this.cancel();
+            }
+        }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
     }
 }

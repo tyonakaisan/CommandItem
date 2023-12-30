@@ -59,8 +59,6 @@ public final class ItemStackSerializerConfigurate implements TypeSerializer<Item
             node.node(DATA_VERSION).set(objSerializeMap.get(DATA_VERSION));
             node.node(MATERIAL_TYPE).set(objSerializeMap.get(MATERIAL_TYPE));
 
-            System.out.println("moto: " + obj.serialize());
-
             if (obj.hasItemMeta()) {
                 var metaNode = node.node(ITEM_META);
                 metaNode.set(ConfigurationSerializable.class, obj.getItemMeta());

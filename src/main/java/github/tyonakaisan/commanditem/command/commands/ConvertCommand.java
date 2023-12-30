@@ -1,13 +1,13 @@
 package github.tyonakaisan.commanditem.command.commands;
 
 import cloud.commandframework.CommandManager;
-import cloud.commandframework.arguments.standard.StringArgument;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.CommandItem;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.Convert;
+import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -15,6 +15,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.io.IOException;
+import java.util.List;
 
 @DefaultQualifier(NonNull.class)
 public final class ConvertCommand implements CommandItemCommand {
@@ -47,13 +48,16 @@ public final class ConvertCommand implements CommandItemCommand {
                 .literal("convert")
                 .permission("commanditem.command.convert")
                 .senderType(CommandSender.class)
-                .argument(StringArgument.of("file_name"))
+                .argument(this.commandManager.argumentBuilder(String.class, "file_name")
+                        .withSuggestionsProvider((context, string) -> List.of("<file_name>"))
+                        .build())
                 .handler(handler -> {
                     final String fileName = handler.get("file_name");
                     final var player = (Player) handler.getSender();
                     final var item = player.getInventory().getItemInMainHand();
+                    final var pdc = item.getItemMeta().getPersistentDataContainer();
 
-                    if (item.getType() == Material.AIR) {
+                    if (item.getType() == Material.AIR || pdc.has(NamespacedKeyUtils.idKey())) {
                         player.sendRichMessage("<red>This item cannot be converted!</red>");
                         return;
                     }

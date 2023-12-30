@@ -3,12 +3,14 @@ package github.tyonakaisan.commanditem.config;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.primary.PrimaryConfig;
-import github.tyonakaisan.commanditem.serialisation.*;
+import github.tyonakaisan.commanditem.serialisation.ColorSerializer;
+import github.tyonakaisan.commanditem.serialisation.ConfigurationSerializableSerializerConfigurate;
+import github.tyonakaisan.commanditem.serialisation.EnchantmentSerializerConfigurate;
+import github.tyonakaisan.commanditem.serialisation.ItemStackSerializerConfigurate;
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Color;
-import org.bukkit.block.banner.Pattern;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -32,7 +34,6 @@ public class ConfigFactory {
     private final ItemStackSerializerConfigurate itemStackSerializer;
     private final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer;
     private final EnchantmentSerializerConfigurate enchantmentSerializer;
-    private final BannerPatternSerializerConfigurate bannerPatternSerializer;
     private final ColorSerializer colorSerializer;
 
     private @Nullable PrimaryConfig primaryConfig = null;
@@ -44,7 +45,6 @@ public class ConfigFactory {
             final ItemStackSerializerConfigurate itemStackSerializer,
             final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer,
             final EnchantmentSerializerConfigurate enchantmentSerializer,
-            final BannerPatternSerializerConfigurate bannerPatternSerializer,
             final ColorSerializer colorSerializer
             ) {
         this.dataDirectory = dataDirectory;
@@ -52,7 +52,6 @@ public class ConfigFactory {
         this.itemStackSerializer = itemStackSerializer;
         this.configurationSerializableSerializer = configurationSerializableSerializer;
         this.enchantmentSerializer = enchantmentSerializer;
-        this.bannerPatternSerializer = bannerPatternSerializer;
         this.colorSerializer = colorSerializer;
     }
 
@@ -92,7 +91,6 @@ public class ConfigFactory {
                                     .registerAll(kyoriSerializer.serializers())
                                     .register(ItemStack.class, this.itemStackSerializer)
                                     .register(ConfigurationSerializable.class, this.configurationSerializableSerializer)
-                                    .register(Pattern.class, this.bannerPatternSerializer)
                                     .register(EnchantmentSerializerConfigurate.Enchant.class, this.enchantmentSerializer)
                                     .register(Color.class, this.colorSerializer)
                     );
