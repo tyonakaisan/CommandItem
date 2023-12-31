@@ -44,7 +44,7 @@ public final class GiveCommand implements CommandItemCommand {
 
     @Override
     public void init() {
-        final var command = this.commandManager.commandBuilder("commaditem", "ci")
+        final var command = this.commandManager.commandBuilder("commanditem", "cmdi", "ci")
                 .literal("give")
                 .permission("commanditem.command.give")
                 .senderType(CommandSender.class)

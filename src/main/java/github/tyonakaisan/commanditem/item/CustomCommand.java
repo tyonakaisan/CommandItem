@@ -14,6 +14,7 @@ public record CustomCommand(
         List<String> commands,
         int repeat,
         int period,
-        int delay
+        int delay,
+        double runWeight
 ) {
 }

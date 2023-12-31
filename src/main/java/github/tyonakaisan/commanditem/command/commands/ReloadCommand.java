@@ -32,7 +32,7 @@ public final class ReloadCommand implements CommandItemCommand {
 
     @Override
     public void init() {
-        final var command = this.commandManager.commandBuilder("commaditem", "ci")
+        final var command = this.commandManager.commandBuilder("commanditem", "cmdi", "ci")
                 .literal("reload")
                 .permission("commanditem.command.reload")
                 .senderType(CommandSender.class)
