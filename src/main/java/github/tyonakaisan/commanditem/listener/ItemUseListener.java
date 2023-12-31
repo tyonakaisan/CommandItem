@@ -3,18 +3,23 @@ package github.tyonakaisan.commanditem.listener;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.CommandItem;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
+import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.util.ActionUtils;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
+
+import java.util.Objects;
 
 @DefaultQualifier(NonNull.class)
 public final class ItemUseListener implements Listener {
@@ -42,8 +47,7 @@ public final class ItemUseListener implements Listener {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.fromBukkitAction(event.getAction());
 
-            this.convert.setPlayerHandItem(player, event.getHand(), item, action);
-            this.convert.executeCommand(commandsItem, player, action);
+            this.execute(player, Objects.requireNonNull(event.getHand()), item, commandsItem, action);
 
             if (event.getAction() == Action.RIGHT_CLICK_BLOCK && !commandsItem.placeable()) {
                 event.setCancelled(true);
@@ -60,8 +64,7 @@ public final class ItemUseListener implements Listener {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.CONSUME;
 
-            this.convert.setPlayerHandItem(player, event.getHand(), item, action);
-            this.convert.executeCommand(commandsItem, player, action);
+            this.execute(player, Objects.requireNonNull(event.getHand()), item, commandsItem, action);
         }
     }
 
@@ -74,8 +77,19 @@ public final class ItemUseListener implements Listener {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.PLACE;
 
-            this.convert.setPlayerHandItem(player, event.getHand(), item, action);
-            this.convert.executeCommand(commandsItem, player, action);
+            this.execute(player, Objects.requireNonNull(event.getHand()), item, commandsItem, action);
         }
+    }
+
+
+    private void execute(Player player, EquipmentSlot hand, ItemStack itemStack, CommandsItem commandsItem, ActionUtils.ItemAction action) {
+        this.convert.setPlayerHandItem(player, hand, itemStack, action);
+
+        if (this.convert.isMaxUsesExceeded(itemStack)) {
+            player.sendRichMessage("<red>最大使用回数を超えているためコマンドは実行されません!");
+            return;
+        }
+
+        this.convert.executeCommand(commandsItem, player, action);
     }
 }

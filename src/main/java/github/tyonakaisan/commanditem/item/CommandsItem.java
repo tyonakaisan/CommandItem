@@ -21,18 +21,4 @@ public record CommandsItem(
         Map<ActionUtils.ItemAction, List<CustomCommand>> byPlayerCommands,
         Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands
 ) {
-    @Override
-    public boolean equals(Object obj) {
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        return "";
-    }
 }

@@ -31,7 +31,7 @@ public class CommandItemConfig {
     private Key key = Key.key("key:value");
     @Comment("""
             The command can be executed as many times as specified in this field
-            Entering a number below 0 disables this feature
+            Entering a number below -1 disables this feature
             """)
     private int maxUses = 0;
     private boolean stackable = true;

@@ -58,33 +58,40 @@ public final class Convert {
         return pdc.has(NamespacedKeyUtils.idKey());
     }
 
+    public boolean isMaxUsesExceeded(ItemStack itemStack) {
+        if (!this.isCommandItem(itemStack)) return false;
+        var pdc = itemStack.getItemMeta().getPersistentDataContainer();
+        int currentCount = pdc.getOrDefault(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
+        return currentCount > this.toCommandsItem(itemStack).maxUses();
+    }
+
     public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, ActionUtils.ItemAction itemAction) {
         if (equipmentSlot == null) return;
         if (equipmentSlot == EquipmentSlot.HAND) {
-            player.getInventory().setItemInMainHand(reduceUsageCounts(item, itemAction));
+            player.getInventory().setItemInMainHand(updateCounts(item, itemAction));
         } else {
-            player.getInventory().setItemInOffHand(reduceUsageCounts(item, itemAction));
+            player.getInventory().setItemInOffHand(updateCounts(item, itemAction));
         }
     }
 
-    private ItemStack reduceUsageCounts(ItemStack itemStack, ActionUtils.ItemAction itemAction) {
+    private ItemStack updateCounts(ItemStack itemStack, ActionUtils.ItemAction itemAction) {
         var cloneItem = itemStack.clone();
         var pdc = cloneItem.getItemMeta().getPersistentDataContainer();
         var commandsItem = this.toCommandsItem(cloneItem);
 
         // 重ねれるアイテムの場合、カウント減らしたあとに分けると両方へってしまう（？）
         // 例：2こ(残り3)->一回使用&分ける->1こ(残り2)&1こ(残り2)
+        if (commandsItem.maxUses() <= -1) {
+            return cloneItem;
+        }
+
         if (pdc.has(NamespacedKeyUtils.usageKey())
                 && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {
-            int counts = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER)) - 1;
-
-            if (counts <= -1) {
-                return cloneItem;
-            }
+            int counts = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER)) + 1;
 
             cloneItem.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
 
-            if (counts == 0) {
+            if (counts >= commandsItem.maxUses()) {
                 return cloneItem.getAmount() == 1 ? new ItemStack(Material.AIR) : ItemBuilder.of(this.toItemStack(this.toCommandsItem(cloneItem)))
                         .amount(cloneItem.getAmount() - 1)
                         .build();
@@ -98,7 +105,7 @@ public final class Convert {
 
         itemStack.editMeta(itemMeta -> {
             itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, commandsItem.key().value());
-            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, commandsItem.maxUses());
+            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
             if (!commandsItem.stackable()) {
                 itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
             }

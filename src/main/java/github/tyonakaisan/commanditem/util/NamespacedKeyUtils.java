@@ -14,7 +14,7 @@ public final class NamespacedKeyUtils {
     private static final String NAMESPACE = "command_item";
 
     private static final NamespacedKey ID_KEY = new NamespacedKey(NAMESPACE, "id");
-    private static final NamespacedKey USAGE_KEY = new NamespacedKey(NAMESPACE, "max_uses");
+    private static final NamespacedKey USAGE_KEY = new NamespacedKey(NAMESPACE, "uses");
     private static final NamespacedKey UUID_KEY = new NamespacedKey(NAMESPACE, "uuid");
 
     public static NamespacedKey idKey() {
