@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Singleton
 @DefaultQualifier(NonNull.class)
@@ -131,35 +132,40 @@ public final class Convert {
 
         byPlayerCommands.forEach(customCommand -> new BukkitRunnable() {
             int count = 0;
-
+            final double weight = ThreadLocalRandom.current().nextDouble();
             @Override
             public void run() {
-                count++;
+                if (customCommand.runWeight() >= weight || customCommand.runWeight() == 0) {
+                    count++;
 
-                switch (customCommand.action()) {
-                    case COMMAND -> CommandExecutor.executeByPlayer(customCommand, player);
-                    case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
-                    case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand);
+                    switch (customCommand.action()) {
+                        case COMMAND -> CommandExecutor.executeByPlayer(customCommand, player);
+                        case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                        case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
+                    }
+
+                    if (count >= customCommand.repeat()) this.cancel();
                 }
-
-                if (count >= customCommand.repeat()) this.cancel();
             }
         }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
 
         byConsoleCommands.forEach(customCommand -> new BukkitRunnable() {
             int count = 0;
+            final double weight = ThreadLocalRandom.current().nextDouble();
 
             @Override
             public void run() {
-                count++;
+                if (customCommand.runWeight() >= weight || customCommand.runWeight() == 0) {
+                    count++;
 
-                switch (customCommand.action()) {
-                    case COMMAND -> CommandExecutor.executeByConsole(customCommand, player);
-                    case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
-                    case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand);
+                    switch (customCommand.action()) {
+                        case COMMAND -> CommandExecutor.executeByConsole(customCommand, player);
+                        case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                        case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
+                    }
+
+                    if (count >= customCommand.repeat()) this.cancel();
                 }
-
-                if (count >= customCommand.repeat()) this.cancel();
             }
         }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
     }
