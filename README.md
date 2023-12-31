@@ -47,5 +47,3 @@ key="command_item:test"
 max-uses=0
 placeable=true
 stackable=true
-
-

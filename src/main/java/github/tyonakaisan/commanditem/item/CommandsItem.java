@@ -1,5 +1,6 @@
 package github.tyonakaisan.commanditem.item;
 
+import github.tyonakaisan.commanditem.util.ActionUtils;
 import net.kyori.adventure.key.Key;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -11,15 +12,13 @@ import java.util.Map;
 
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
-public record ItemRecord(
-        ItemStack item,
-        String displayName,
-        List<String> lore,
+public record CommandsItem(
+        ItemStack itemStack,
         Key key,
-        int usageCounts,
-        boolean unStackable,
-        boolean canPlace,
-        Map<String, List<String>> byPlayerCommands,
-        Map<String, List<String>> byConsoleCommands
+        int maxUses,
+        boolean stackable,
+        boolean placeable,
+        Map<ActionUtils.ItemAction, List<CustomCommand>> byPlayerCommands,
+        Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands
 ) {
 }

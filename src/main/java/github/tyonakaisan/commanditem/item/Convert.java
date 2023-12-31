@@ -1,42 +1,38 @@
 package github.tyonakaisan.commanditem.item;
 
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.CommandItem;
+import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.CommandExecutor;
 import github.tyonakaisan.commanditem.util.ItemBuilder;
+import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.intellij.lang.annotations.Subst;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Singleton
 @DefaultQualifier(NonNull.class)
 public final class Convert {
+
     private final Path dataDirectory;
     private final CommandItem commandItem;
     private final CommandItemRegistry commandItemRegistry;
-
-    public static final String NAMESPACE = "command_item";
-    public static final NamespacedKey commandItemKey = new NamespacedKey(NAMESPACE, "item_id");
-    public static final NamespacedKey commandItemUsageCountsKey = new NamespacedKey(NAMESPACE, "counts");
-    public static final NamespacedKey commandItemUnStackableKey = new NamespacedKey(NAMESPACE, "item_uuid");
+    private final Map<UUID, Long> internalCoolTime = new HashMap<>();
 
     @Inject
     Convert(
@@ -58,89 +54,145 @@ public final class Convert {
     public boolean isCommandItem(@Nullable ItemStack itemStack) {
         if (itemStack == null) return false;
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        return pdc.has(commandItemKey);
+        return pdc.has(NamespacedKeyUtils.idKey());
     }
 
-    public ItemStack reduceUsageCounts(ItemStack itemStack, String action) {
-        var item = itemStack.clone();
-        var pdc = item.getItemMeta().getPersistentDataContainer();
-        var itemRecord = this.toCommandItemRecord(item);
+    public boolean isMaxUsesExceeded(ItemStack itemStack) {
+        if (!this.isCommandItem(itemStack)) return false;
+        var pdc = itemStack.getItemMeta().getPersistentDataContainer();
+        int currentCount = pdc.getOrDefault(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
+        if (this.toCommandsItem(itemStack).maxUses() <= -1) {
+            return false;
+        }
+        return currentCount > this.toCommandsItem(itemStack).maxUses();
+    }
 
-        if(pdc.has(commandItemUsageCountsKey)
-                && (itemRecord.byPlayerCommands().containsKey(action) || itemRecord.byConsoleCommands().containsKey(action))) {
-            int counts = Objects.requireNonNull(pdc.get(commandItemUsageCountsKey, PersistentDataType.INTEGER)) - 1;
+    public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, ActionUtils.ItemAction itemAction) {
+        if (equipmentSlot == null) return;
+        if (equipmentSlot == EquipmentSlot.HAND) {
+            player.getInventory().setItemInMainHand(updateCounts(item, itemAction));
+        } else {
+            player.getInventory().setItemInOffHand(updateCounts(item, itemAction));
+        }
+    }
 
-            if (counts <= -1) return item;
+    // 2回callされる対策　ﾕﾙｾﾅｲ…
+    public boolean checkInternalCoolTime(UUID uuid) {
+        this.internalCoolTime.computeIfAbsent(uuid, v -> System.currentTimeMillis());
+        if (this.internalCoolTime.containsKey(uuid)) {
+            if (this.internalCoolTime.get(uuid) == -1L) {
+                return true;
+            } else {
+                long timeElapsed = System.currentTimeMillis() - this.internalCoolTime.get(uuid);
 
-            item.editMeta(meta -> meta.getPersistentDataContainer().set(commandItemUsageCountsKey, PersistentDataType.INTEGER, counts));
+                if (timeElapsed >= 3L) {
+                    this.internalCoolTime.put(uuid, System.currentTimeMillis());
+                    return true;
+                }
+            }
+        } else {
+            this.internalCoolTime.put(uuid, System.currentTimeMillis());
+            return true;
+        }
+        return false;
+    }
 
-            if (counts == 0) {
-                if (item.getAmount() == 1) return new ItemStack(Material.AIR);
+    public void initInternalCoolTime(UUID uuid) {
+        this.internalCoolTime.computeIfAbsent(uuid, k -> System.currentTimeMillis());
+    }
 
-                return ItemBuilder.of(this.toItemStack(this.toCommandItemRecord(item)))
-                        .amount(item.getAmount() - 1)
+    private ItemStack updateCounts(ItemStack itemStack, ActionUtils.ItemAction itemAction) {
+        var cloneItem = itemStack.clone();
+        var pdc = cloneItem.getItemMeta().getPersistentDataContainer();
+        var commandsItem = this.toCommandsItem(cloneItem);
+
+        // 重ねれるアイテムの場合、カウント減らしたあとに分けると両方へってしまう（？）
+        // 例：2こ(残り3)->一回使用&分ける->1こ(残り2)&1こ(残り2)
+        if (commandsItem.maxUses() <= -1) {
+            return cloneItem;
+        }
+
+        if (pdc.has(NamespacedKeyUtils.usageKey())
+                && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {
+            int counts = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER)) + 1;
+
+            cloneItem.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
+
+            if (counts >= commandsItem.maxUses()) {
+                return cloneItem.getAmount() == 1 ? new ItemStack(Material.AIR) : ItemBuilder.of(this.toItemStack(this.toCommandsItem(cloneItem)))
+                        .amount(cloneItem.getAmount() - 1)
                         .build();
             }
         }
-        return item;
+        return cloneItem;
     }
 
-    public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, String action) {
-        if (equipmentSlot == null) return;
-        if (equipmentSlot == EquipmentSlot.HAND) {
-            player.getInventory().setItemInMainHand(reduceUsageCounts(item, action));
-        } else {
-            player.getInventory().setItemInOffHand(reduceUsageCounts(item, action));
-        }
-    }
+    public ItemStack toItemStack(CommandsItem commandsItem) {
+        var itemStack = commandsItem.itemStack();
 
-    public ItemStack toItemStack(ItemRecord itemRecord) {
-        var displayName = itemRecord.displayName();
-        var item = itemRecord.item().clone();
-
-        var loreList = new ArrayList<>(itemRecord.lore());
-
-        item.editMeta(meta -> {
-            meta.displayName(Component.empty()
-                    .decoration(TextDecoration.ITALIC, false)
-                    .append(MiniMessage.miniMessage().deserialize(displayName))
-            );
-
-            meta.lore(loreList.stream()
-                    .map(lore -> Component.empty()
-                            .color(NamedTextColor.WHITE)
-                            .decoration(TextDecoration.ITALIC, false)
-                            .append(MiniMessage.miniMessage().deserialize(lore)))
-                    .toList());
-            //pdc
-            meta.getPersistentDataContainer().set(commandItemKey, PersistentDataType.STRING, itemRecord.key().value());
-            meta.getPersistentDataContainer().set(commandItemUsageCountsKey, PersistentDataType.INTEGER, itemRecord.usageCounts());
-            if (itemRecord.unStackable()) {
-                meta.getPersistentDataContainer().set(commandItemUnStackableKey, PersistentDataType.STRING, UUID.randomUUID().toString());
+        itemStack.editMeta(itemMeta -> {
+            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, commandsItem.key().value());
+            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
+            if (!commandsItem.stackable()) {
+                itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
             }
         });
-
-        return item;
+        return itemStack;
     }
 
-    public ItemRecord toCommandItemRecord(ItemStack itemStack) {
+    public CommandsItem toCommandsItem(ItemStack itemStack) {
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-
-        ItemRecord itemRecord;
-        var itemValue = Objects.requireNonNull(pdc.get(commandItemKey, PersistentDataType.STRING));
-        itemRecord = Objects.requireNonNull(this.commandItemRegistry.get(Key.key(NAMESPACE, itemValue)));
-
-        return itemRecord;
+        @Subst("key")
+        var keyValue = NamespacedKeyUtils.namespace();
+        @Subst("value")
+        var value = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.idKey(), PersistentDataType.STRING));
+        return Objects.requireNonNull(this.commandItemRegistry.get(Key.key(keyValue, value)));
     }
 
-    public void executeCommand(ItemRecord itemRecord, Player player, String action) {
-        var byPlayerCommands = new ArrayList<String>();
-        var byConsoleCommands = new ArrayList<String>();
+    public void executeCommand(CommandsItem item, Player player, ActionUtils.ItemAction itemAction) {
+        List<CustomCommand> byPlayerCommands = item.byPlayerCommands().get(itemAction) != null ?
+                Lists.newArrayList(item.byPlayerCommands().get(itemAction)) : Collections.emptyList();
 
-        if (itemRecord.byPlayerCommands().get(action) != null) byPlayerCommands = (ArrayList<String>) itemRecord.byPlayerCommands().get(action);
-        if (itemRecord.byConsoleCommands().get(action) != null) byConsoleCommands = (ArrayList<String>) itemRecord.byConsoleCommands().get(action);
+        List<CustomCommand> byConsoleCommands = item.byConsoleCommands().get(itemAction) != null ?
+                Lists.newArrayList(item.byConsoleCommands().get(itemAction)) : Collections.emptyList();
 
-        byPlayerCommands.forEach(command -> CommandExecutor.executeByPlayer(command, player));
-        byConsoleCommands.forEach(command -> CommandExecutor.executeByConsole(command, player));
+        byPlayerCommands.forEach(customCommand -> new BukkitRunnable() {
+            int count = 0;
+            final double weight = ThreadLocalRandom.current().nextDouble();
+            @Override
+            public void run() {
+                if (customCommand.runWeight() >= weight || customCommand.runWeight() == 0) {
+                    count++;
+
+                    switch (customCommand.action()) {
+                        case COMMAND -> CommandExecutor.executeByPlayer(customCommand, player);
+                        case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                        case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
+                    }
+
+                    if (count >= customCommand.repeat()) this.cancel();
+                }
+            }
+        }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
+
+        byConsoleCommands.forEach(customCommand -> new BukkitRunnable() {
+            int count = 0;
+            final double weight = ThreadLocalRandom.current().nextDouble();
+
+            @Override
+            public void run() {
+                if (customCommand.runWeight() >= weight || customCommand.runWeight() == 0) {
+                    count++;
+
+                    switch (customCommand.action()) {
+                        case COMMAND -> CommandExecutor.executeByConsole(customCommand, player);
+                        case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                        case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
+                    }
+
+                    if (count >= customCommand.repeat()) this.cancel();
+                }
+            }
+        }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
     }
 }

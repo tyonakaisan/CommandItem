@@ -3,9 +3,15 @@ package github.tyonakaisan.commanditem.config;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.primary.PrimaryConfig;
+import github.tyonakaisan.commanditem.serialisation.ColorSerializer;
+import github.tyonakaisan.commanditem.serialisation.ConfigurationSerializableSerializerConfigurate;
 import github.tyonakaisan.commanditem.serialisation.EnchantmentSerializerConfigurate;
 import github.tyonakaisan.commanditem.serialisation.ItemStackSerializerConfigurate;
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Color;
+import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -23,24 +29,34 @@ import java.nio.file.Path;
 public class ConfigFactory {
 
     private final Path dataDirectory;
+    private final ComponentLogger logger;
 
     private final ItemStackSerializerConfigurate itemStackSerializer;
+    private final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer;
     private final EnchantmentSerializerConfigurate enchantmentSerializer;
+    private final ColorSerializer colorSerializer;
 
     private @Nullable PrimaryConfig primaryConfig = null;
 
     @Inject
     public ConfigFactory(
             final Path dataDirectory,
+            final ComponentLogger logger,
             final ItemStackSerializerConfigurate itemStackSerializer,
-            final EnchantmentSerializerConfigurate enchantmentSerializer
+            final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer,
+            final EnchantmentSerializerConfigurate enchantmentSerializer,
+            final ColorSerializer colorSerializer
             ) {
         this.dataDirectory = dataDirectory;
+        this.logger = logger;
         this.itemStackSerializer = itemStackSerializer;
+        this.configurationSerializableSerializer = configurationSerializableSerializer;
         this.enchantmentSerializer = enchantmentSerializer;
+        this.colorSerializer = colorSerializer;
     }
 
     public @Nullable PrimaryConfig reloadPrimaryConfig() {
+        this.logger.info("Reloading configuration file...");
         try {
             this.primaryConfig = this.load(PrimaryConfig.class, "config.conf");
         } catch (final IOException exception) {
@@ -54,7 +70,6 @@ public class ConfigFactory {
         if (this.primaryConfig == null) {
             return this.reloadPrimaryConfig();
         }
-
         return this.primaryConfig;
     }
 
@@ -62,14 +77,22 @@ public class ConfigFactory {
         return HoconConfigurationLoader.builder()
                 .prettyPrinting(true)
                 .defaultOptions(opts -> {
-                    final ConfigurateComponentSerializer serializer =
+                    final var miniMessageSerializer =
+                            ConfigurateComponentSerializer.builder()
+                                    .scalarSerializer(MiniMessage.miniMessage())
+                                    .outputStringComponents(true)
+                                    .build();
+                    final var kyoriSerializer =
                             ConfigurateComponentSerializer.configurate();
 
                     return opts.shouldCopyDefaults(true).serializers(serializerBuilder ->
                             serializerBuilder
-                                    .registerAll(serializer.serializers())
+                                    .registerAll(miniMessageSerializer.serializers())
+                                    .registerAll(kyoriSerializer.serializers())
                                     .register(ItemStack.class, this.itemStackSerializer)
+                                    .register(ConfigurationSerializable.class, this.configurationSerializableSerializer)
                                     .register(EnchantmentSerializerConfigurate.Enchant.class, this.enchantmentSerializer)
+                                    .register(Color.class, this.colorSerializer)
                     );
                 })
                 .path(file)
@@ -94,8 +117,8 @@ public class ConfigFactory {
                 loader.save(root);
             }
 
+            this.logger.info("Successfully configuration file loaded!");
             return config;
-
         } catch (final ConfigurateException exception) {
             exception.printStackTrace();
             return null;

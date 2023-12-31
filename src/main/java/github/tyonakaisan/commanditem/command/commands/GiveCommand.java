@@ -10,6 +10,7 @@ import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.Convert;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.resolver.Formatter;
 import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
@@ -43,12 +44,12 @@ public final class GiveCommand implements CommandItemCommand {
 
     @Override
     public void init() {
-        final var command = this.commandManager.commandBuilder("commaditem", "ci")
+        final var command = this.commandManager.commandBuilder("commanditem", "cmdi", "ci")
                 .literal("give")
                 .permission("commanditem.command.give")
                 .senderType(CommandSender.class)
                 .argument(MultiplePlayerSelectorArgument.of("player"))
-                .argument(commandManager.argumentBuilder(Key.class, "key")
+                .argument(this.commandManager.argumentBuilder(Key.class, "key")
                         .withSuggestionsProvider(
                                 ((context, string) -> {
                                     final Set<Key> allArgs = commandItemRegistry.keySet();
@@ -58,30 +59,43 @@ public final class GiveCommand implements CommandItemCommand {
                                 })
                         )
                         .build())
-                .argument(IntegerArgument.optional("amount"))
+                .argument(IntegerArgument.optional("count"))
                 .handler(handler -> {
                     final var sender = handler.getSender();
                     final MultiplePlayerSelector players = handler.get("player");
                     final var key = (Key) handler.get("key");
-                    final var amount = (int) handler.getOptional("amount").orElse(1);
+                    final var count = (int) handler.getOptional("count").orElse(1);
 
                     players.getPlayers().forEach(player -> {
+                        var item = this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)));
+                        var maxReceive = item.getMaxStackSize() * 36;
+                        if (count > maxReceive) {
+                            sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item max count is <max></red>",
+                                    Formatter.number("max", maxReceive)
+                            ));
+                            return;
+                        }
 
-                        var item = convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)));
-                        if (Objects.requireNonNull(this.commandItemRegistry.get(key)).unStackable()) {
-                            for (int i = 0; i < amount; i++) {
-                                player.getInventory().addItem(convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))));
+                        if (!Objects.requireNonNull(this.commandItemRegistry.get(key)).stackable() || item.getMaxStackSize() == 1) {
+                            for (int i = 0; i < count; i++) {
+                                player.getInventory().addItem(this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))));
                             }
                         } else {
-                            item.setAmount(amount);
+                            item.setAmount(count);
                             player.getInventory().addItem(item);
                         }
 
-                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<white><player>に<white><display_name></white>を<amount>個与えました</white>",
+                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<white><player>に<white><display_name></white>を<count>個与えました</white>",
                                 Placeholder.parsed("player", player.getName()),
-                                Placeholder.component("display_name", convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))).displayName()),
-                                Formatter.number("amount", amount)
+                                Placeholder.component("display_name", this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))).displayName()),
+                                Formatter.number("count", count)
                         ));
+
+                        sender.playSound(Sound.sound()
+                                        .type(Key.key("minecraft:entity.item.pickup"))
+                                        .volume(0.3f)
+                                        .pitch(2f)
+                                .build());
                     });
                 })
                 .build();
