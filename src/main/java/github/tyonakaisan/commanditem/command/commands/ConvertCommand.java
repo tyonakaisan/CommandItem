@@ -8,6 +8,7 @@ import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -16,6 +17,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 @DefaultQualifier(NonNull.class)
 public final class ConvertCommand implements CommandItemCommand {
@@ -44,7 +46,7 @@ public final class ConvertCommand implements CommandItemCommand {
 
     @Override
     public void init() {
-        final var command = this.commandManager.commandBuilder("commaditem", "ci")
+        final var command = this.commandManager.commandBuilder("commanditem", "cmdi", "ci")
                 .literal("convert")
                 .permission("commanditem.command.convert")
                 .senderType(CommandSender.class)
@@ -56,6 +58,16 @@ public final class ConvertCommand implements CommandItemCommand {
                     final var player = (Player) handler.getSender();
                     final var item = player.getInventory().getItemInMainHand();
                     final var pdc = item.getItemMeta().getPersistentDataContainer();
+                    final Set<Key> allKeySet = this.commandItemRegistry.keySet();
+
+                    var allKey = allKeySet.stream()
+                            .map(Key::value)
+                            .toList();
+
+                    if (allKey.contains(fileName)) {
+                        player.sendRichMessage("<red>This file has already been created!</red>");
+                        return;
+                    }
 
                     if (item.getType() == Material.AIR || pdc.has(NamespacedKeyUtils.idKey())) {
                         player.sendRichMessage("<red>This item cannot be converted!</red>");
