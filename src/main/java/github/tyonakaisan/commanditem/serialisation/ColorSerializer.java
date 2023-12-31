@@ -25,11 +25,6 @@ public final class ColorSerializer implements TypeSerializer<Color> {
         var red = node.node("RED").getInt();
         var green = node.node("GREEN").getInt();
         var blue = node.node("BLUE").getInt();
-        System.out.println("ok!");
-        System.out.println("node: " + node);
-        System.out.println("r: " + red);
-        System.out.println("g: " + green);
-        System.out.println("b: " + blue);
         return Color.fromRGB(red, green, blue);
     }
 
