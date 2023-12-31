@@ -22,7 +22,7 @@ public class CommandItemConfig {
                                 ##### Experimental features ######
             ##### DO NOT EDIT THE SECTIONS "v", "==", "meta-type", "PublicBukkitValues" #####
             Some items may not convert correctly or may be missing data
-            If such a thing happens, it cannot be saved file
+            If such a thing happens, it cannot be loaded file
             """)
     private ItemStack itemStack;
     @Comment("""
