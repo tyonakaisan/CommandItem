@@ -63,6 +63,9 @@ public final class Convert {
         if (!this.isCommandItem(itemStack)) return false;
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
         int currentCount = pdc.getOrDefault(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
+        if (this.toCommandsItem(itemStack).maxUses() <= -1) {
+            return false;
+        }
         return currentCount > this.toCommandsItem(itemStack).maxUses();
     }
 
