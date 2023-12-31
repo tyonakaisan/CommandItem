@@ -2,6 +2,7 @@ package github.tyonakaisan.commanditem.util;
 
 import github.tyonakaisan.commanditem.item.CustomCommand;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -33,7 +34,8 @@ public final class CommandExecutor {
     }
 
     public static void executeMessage(String message, Player player) {
-        var component = MiniMessage.miniMessage().deserialize(message);
+        var component = MiniMessage.miniMessage().deserialize(message,
+                Placeholder.parsed("player", player.getName()));
         player.sendMessage(component);
     }
 
@@ -41,12 +43,13 @@ public final class CommandExecutor {
         customCommand.commands().forEach(message -> executeMessage(message, player));
     }
 
-    public static void executeBroadCast(String message) {
-        var component = MiniMessage.miniMessage().deserialize(message);
+    public static void executeBroadCast(String message, Player player) {
+        var component = MiniMessage.miniMessage().deserialize(message,
+                Placeholder.parsed("player", player.getName()));
         Bukkit.getServer().broadcast(component);
     }
 
-    public static void executeBroadCast(CustomCommand customCommand) {
-        customCommand.commands().forEach(CommandExecutor::executeBroadCast);
+    public static void executeBroadCast(CustomCommand customCommand, Player player) {
+        customCommand.commands().forEach(message -> executeBroadCast(message, player));
     }
 }
