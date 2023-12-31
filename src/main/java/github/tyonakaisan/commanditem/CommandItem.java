@@ -7,6 +7,7 @@ import github.tyonakaisan.commanditem.command.commands.ConvertCommand;
 import github.tyonakaisan.commanditem.command.commands.GiveCommand;
 import github.tyonakaisan.commanditem.command.commands.ReloadCommand;
 import github.tyonakaisan.commanditem.listener.ItemUseListener;
+import github.tyonakaisan.commanditem.listener.JoinListener;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,7 +21,8 @@ import java.util.Set;
 public final class CommandItem extends JavaPlugin {
 
     private static final Set<Class<? extends Listener>> LISTENER_CLASSES = Set.of(
-            ItemUseListener.class
+            ItemUseListener.class,
+            JoinListener.class
     );
     private static final Set<Class<? extends CommandItemCommand>> COMMAND_CLASSES = Set.of(
             ReloadCommand.class,

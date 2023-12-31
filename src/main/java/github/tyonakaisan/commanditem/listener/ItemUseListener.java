@@ -43,7 +43,7 @@ public final class ItemUseListener implements Listener {
         var player = event.getPlayer();
         @Nullable ItemStack item = event.getItem();
 
-        if (this.convert.isCommandItem(item)) {
+        if (this.convert.isCommandItem(item) && this.convert.checkInternalCoolTime(player.getUniqueId())) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.fromBukkitAction(event.getAction());
 

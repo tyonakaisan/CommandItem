@@ -22,10 +22,7 @@ import org.intellij.lang.annotations.Subst;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Singleton
@@ -35,6 +32,7 @@ public final class Convert {
     private final Path dataDirectory;
     private final CommandItem commandItem;
     private final CommandItemRegistry commandItemRegistry;
+    private final Map<UUID, Long> internalCoolTime = new HashMap<>();
 
     @Inject
     Convert(
@@ -76,6 +74,31 @@ public final class Convert {
         } else {
             player.getInventory().setItemInOffHand(updateCounts(item, itemAction));
         }
+    }
+
+    // 2回callされる対策　ﾕﾙｾﾅｲ…
+    public boolean checkInternalCoolTime(UUID uuid) {
+        this.internalCoolTime.computeIfAbsent(uuid, v -> System.currentTimeMillis());
+        if (this.internalCoolTime.containsKey(uuid)) {
+            if (this.internalCoolTime.get(uuid) == -1L) {
+                return true;
+            } else {
+                long timeElapsed = System.currentTimeMillis() - this.internalCoolTime.get(uuid);
+
+                if (timeElapsed >= 3L) {
+                    this.internalCoolTime.put(uuid, System.currentTimeMillis());
+                    return true;
+                }
+            }
+        } else {
+            this.internalCoolTime.put(uuid, System.currentTimeMillis());
+            return true;
+        }
+        return false;
+    }
+
+    public void initInternalCoolTime(UUID uuid) {
+        this.internalCoolTime.computeIfAbsent(uuid, k -> System.currentTimeMillis());
     }
 
     private ItemStack updateCounts(ItemStack itemStack, ActionUtils.ItemAction itemAction) {
