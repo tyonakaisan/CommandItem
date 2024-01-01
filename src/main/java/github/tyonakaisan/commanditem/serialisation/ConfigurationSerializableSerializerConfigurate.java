@@ -69,6 +69,7 @@ public class ConfigurationSerializableSerializerConfigurate implements TypeSeria
                             deSerializeMap.put("skull-owner", playerProfile);
                         });
 
+                // 使おうと思ったけど悩み
                 case COLOR -> Optional.ofNullable(serializableNode.get(Color.class))
                         .ifPresent(color -> deSerializeMap.put(key, color));
 
@@ -139,10 +140,12 @@ public class ConfigurationSerializableSerializerConfigurate implements TypeSeria
                     }
 
                     if (value instanceof Collection<?> collections) {
+                        // 空のリストがあるとスキップされてロードした時に読み込めなくなる対策
                         if (collections.isEmpty()) {
                             node.node(key).set(Collections.emptyList());
                             return;
                         }
+
                         collections.forEach(collection -> {
                             try {
                                 node.node(key).appendListNode().set(collection);
