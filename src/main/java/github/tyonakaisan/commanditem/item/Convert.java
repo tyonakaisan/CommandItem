@@ -157,6 +157,7 @@ public final class Convert {
                 Lists.newArrayList(item.byConsoleCommands().get(itemAction)) : Collections.emptyList();
 
         byPlayerCommands.forEach(customCommand -> new BukkitRunnable() {
+            final int repeat = Math.min(customCommand.repeat(), 100);
             int count = 0;
             final double weight = ThreadLocalRandom.current().nextDouble();
             @Override
@@ -170,12 +171,13 @@ public final class Convert {
                         case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
                     }
 
-                    if (count >= customCommand.repeat()) this.cancel();
+                    if (count >= repeat) this.cancel();
                 }
             }
         }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
 
         byConsoleCommands.forEach(customCommand -> new BukkitRunnable() {
+            final int repeat = Math.min(customCommand.repeat(), 100);
             int count = 0;
             final double weight = ThreadLocalRandom.current().nextDouble();
 
@@ -190,7 +192,7 @@ public final class Convert {
                         case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
                     }
 
-                    if (count >= customCommand.repeat()) this.cancel();
+                    if (count >= repeat) this.cancel();
                 }
             }
         }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
