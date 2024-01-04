@@ -1,4 +1,4 @@
-package github.tyonakaisan.commanditem.serialisation;
+package github.tyonakaisan.commanditem.config.serialisation;
 
 import com.google.inject.Inject;
 import org.bukkit.Color;

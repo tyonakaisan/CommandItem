@@ -1,4 +1,4 @@
-package github.tyonakaisan.commanditem.serialisation;
+package github.tyonakaisan.commanditem.config.serialisation;
 
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
