@@ -5,7 +5,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.CommandItem;
 import github.tyonakaisan.commanditem.util.ActionUtils;
-import github.tyonakaisan.commanditem.util.CommandExecutor;
 import github.tyonakaisan.commanditem.util.ItemBuilder;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
@@ -14,7 +13,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -23,7 +21,6 @@ import org.intellij.lang.annotations.Subst;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Singleton
 @DefaultQualifier(NonNull.class)
@@ -70,9 +67,9 @@ public final class Convert {
     public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, ActionUtils.ItemAction itemAction) {
         if (equipmentSlot == null) return;
         if (equipmentSlot == EquipmentSlot.HAND) {
-            player.getInventory().setItemInMainHand(updateCounts(item, itemAction));
+            player.getInventory().setItemInMainHand(updateCounts(item, itemAction, player));
         } else {
-            player.getInventory().setItemInOffHand(updateCounts(item, itemAction));
+            player.getInventory().setItemInOffHand(updateCounts(item, itemAction, player));
         }
     }
 
@@ -101,7 +98,7 @@ public final class Convert {
         this.internalCoolTime.computeIfAbsent(uuid, k -> System.currentTimeMillis());
     }
 
-    private ItemStack updateCounts(ItemStack itemStack, ActionUtils.ItemAction itemAction) {
+    private ItemStack updateCounts(ItemStack itemStack, ActionUtils.ItemAction itemAction, Player player) {
         var cloneItem = itemStack.clone();
         var pdc = cloneItem.getItemMeta().getPersistentDataContainer();
         var commandsItem = this.toCommandsItem(cloneItem);
@@ -119,7 +116,7 @@ public final class Convert {
             cloneItem.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
 
             if (counts >= commandsItem.maxUses()) {
-                return cloneItem.getAmount() == 1 ? new ItemStack(Material.AIR) : ItemBuilder.of(this.toItemStack(this.toCommandsItem(cloneItem)))
+                return cloneItem.getAmount() == 1 ? new ItemStack(Material.AIR) : ItemBuilder.of(this.toItemStack(this.toCommandsItem(cloneItem), player))
                         .amount(cloneItem.getAmount() - 1)
                         .build();
             }
@@ -127,10 +124,13 @@ public final class Convert {
         return cloneItem;
     }
 
-    public ItemStack toItemStack(CommandsItem commandsItem) {
+    public ItemStack toItemStack(CommandsItem commandsItem, Player player) {
         var itemStack = commandsItem.itemStack();
 
         itemStack.editMeta(itemMeta -> {
+            itemMeta.displayName(commandsItem.displayName(player));
+            itemMeta.lore(commandsItem.lore(player));
+
             itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, commandsItem.key().value());
             itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
             if (!commandsItem.stackable()) {
@@ -156,45 +156,8 @@ public final class Convert {
         List<CustomCommand> byConsoleCommands = item.byConsoleCommands().get(itemAction) != null ?
                 Lists.newArrayList(item.byConsoleCommands().get(itemAction)) : Collections.emptyList();
 
-        byPlayerCommands.forEach(customCommand -> new BukkitRunnable() {
-            final int repeat = Math.min(customCommand.repeat(), 100);
-            int count = 0;
-            final double weight = ThreadLocalRandom.current().nextDouble();
-            @Override
-            public void run() {
-                if (customCommand.runWeight() >= weight || customCommand.runWeight() == 0) {
-                    count++;
+        byPlayerCommands.forEach(customCommand -> customCommand.repeatCommands(player, customCommand, this.commandItem, false));
 
-                    switch (customCommand.action()) {
-                        case COMMAND -> CommandExecutor.executeByPlayer(customCommand, player);
-                        case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
-                        case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
-                    }
-
-                    if (count >= repeat) this.cancel();
-                }
-            }
-        }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
-
-        byConsoleCommands.forEach(customCommand -> new BukkitRunnable() {
-            final int repeat = Math.min(customCommand.repeat(), 100);
-            int count = 0;
-            final double weight = ThreadLocalRandom.current().nextDouble();
-
-            @Override
-            public void run() {
-                if (customCommand.runWeight() >= weight || customCommand.runWeight() == 0) {
-                    count++;
-
-                    switch (customCommand.action()) {
-                        case COMMAND -> CommandExecutor.executeByConsole(customCommand, player);
-                        case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
-                        case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
-                    }
-
-                    if (count >= repeat) this.cancel();
-                }
-            }
-        }.runTaskTimer(this.commandItem, customCommand.delay(), customCommand.period()));
+        byConsoleCommands.forEach(customCommand -> customCommand.repeatCommands(player, customCommand, this.commandItem, true));
     }
 }

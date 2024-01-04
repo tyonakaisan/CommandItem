@@ -3,9 +3,6 @@ package github.tyonakaisan.commanditem.config.serialisation;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import com.google.inject.Inject;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.json.JSONComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
@@ -50,16 +47,7 @@ public class ConfigurationSerializableSerializerConfigurate implements TypeSeria
             var rawValue = Objects.requireNonNull(serializableNode.raw());
 
             switch (key) {
-                case DISPLAY_NAME -> Optional.ofNullable(serializableNode.get(Component.class))
-                        .ifPresent(displayName -> deSerializeMap.put(DISPLAY_NAME, JSONComponentSerializer.json().serialize(displayName)));
-
-                case LORE -> Optional.ofNullable(serializableNode.getList(Component.class))
-                        .ifPresent(rawLoreList -> {
-                            var loreList = rawLoreList.stream()
-                                    .map(lore -> JSONComponentSerializer.json().serialize(lore))
-                                    .toList();
-                            deSerializeMap.put(LORE, loreList);
-                        });
+                // No deserialize of display names and lore here.
 
                 case SKULL_TEXTURE -> Optional.ofNullable(serializableNode.getString())
                         .ifPresent(texture -> {
@@ -112,22 +100,8 @@ public class ConfigurationSerializableSerializerConfigurate implements TypeSeria
             obj.serialize().forEach((key, value) -> {
                 try {
 
-                    if (key.equals(DISPLAY_NAME)) {
-                        var component = JSONComponentSerializer.json().deserialize((String) value);
-                        var displayName = MiniMessage.miniMessage().serialize(component);
-                        node.node(key).set(displayName);
-                        return;
-                    }
-
-                    if (key.equals(LORE) && value instanceof Collection<?> values) {
-                        var loreList = values.stream()
-                                .map(String.class::cast)
-                                .map(raw -> {
-                                    var component = JSONComponentSerializer.json().deserialize(raw);
-                                    return MiniMessage.miniMessage().serialize(component);
-                                })
-                                .toList();
-                        node.node(key).set(loreList);
+                    // No serialize of display names and lore here.
+                    if (key.equals(DISPLAY_NAME) || key.equals(LORE)) {
                         return;
                     }
 

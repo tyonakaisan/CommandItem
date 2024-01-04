@@ -67,7 +67,7 @@ public final class GiveCommand implements CommandItemCommand {
                     final var count = (int) handler.getOptional("count").orElse(1);
 
                     players.getPlayers().forEach(player -> {
-                        var item = this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)));
+                        var item = this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)), player);
                         var maxReceive = item.getMaxStackSize() * 36;
                         if (count > maxReceive) {
                             sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item max count is <max></red>",
@@ -78,7 +78,7 @@ public final class GiveCommand implements CommandItemCommand {
 
                         if (!Objects.requireNonNull(this.commandItemRegistry.get(key)).stackable() || item.getMaxStackSize() == 1) {
                             for (int i = 0; i < count; i++) {
-                                player.getInventory().addItem(this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))));
+                                player.getInventory().addItem(item);
                             }
                         } else {
                             item.setAmount(count);
@@ -87,7 +87,7 @@ public final class GiveCommand implements CommandItemCommand {
 
                         sender.sendMessage(MiniMessage.miniMessage().deserialize("<white><player>に<white><display_name></white>を<count>個与えました</white>",
                                 Placeholder.parsed("player", player.getName()),
-                                Placeholder.component("display_name", this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key))).displayName()),
+                                Placeholder.component("display_name", this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)), player).displayName()),
                                 Formatter.number("count", count)
                         ));
 

@@ -3,13 +3,18 @@ package github.tyonakaisan.commanditem.config.primary;
 import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.intellij.lang.annotations.Subst;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +30,9 @@ public class CommandItemConfig {
             If such a thing happens, it cannot be loaded file
             """)
     private ItemStack itemStack;
+
+    private String displayName = "";
+    private List<String> lore = new ArrayList<>();
     @Comment("""
             ##### DO NOT EDIT THIS SECTION #####
             """)
@@ -51,8 +59,20 @@ public class CommandItemConfig {
         this.key = Key.key(keyValue, value);
     }
 
-    public void setItemStack(ItemStack itemStack) {
+    public void setItemStack(final ItemStack itemStack) {
         this.itemStack = itemStack;
+        this.setDisplayName(itemStack.getItemMeta().displayName());
+        this.setLore(itemStack.getItemMeta().lore());
+    }
+
+    private void setDisplayName(@Nullable final Component displayName) {
+        this.displayName = displayName == null ? "" : MiniMessage.miniMessage().serialize(displayName);
+    }
+
+    private void setLore(@Nullable final List<Component> lore) {
+        this.lore = lore == null ? Collections.emptyList() : lore.stream()
+                .map(text -> MiniMessage.miniMessage().serialize(text))
+                .toList();
     }
 
 }

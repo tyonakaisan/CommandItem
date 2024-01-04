@@ -15,6 +15,8 @@ repositories {
 
     // TaskChain
     maven("https://repo.aikar.co/content/groups/aikar/")
+
+    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
 }
 
 dependencies {
