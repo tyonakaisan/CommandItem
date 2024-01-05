@@ -28,6 +28,7 @@ public record CommandsItem(
         int maxUses,
         boolean stackable,
         boolean placeable,
+        int coolTime,
         Map<ActionUtils.ItemAction, List<CustomCommand>> byPlayerCommands,
         Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands
 ) {

@@ -42,7 +42,7 @@ public record CustomCommand(
             final double weight = ThreadLocalRandom.current().nextDouble();
             @Override
             public void run() {
-                if (runWeight >= weight || runWeight() == 0) {
+                if (runWeight() >= weight || runWeight() == 0) {
                     count++;
 
                     switch (action()) {

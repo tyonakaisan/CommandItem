@@ -1,4 +1,4 @@
-package github.tyonakaisan.commanditem.config.primary;
+package github.tyonakaisan.commanditem.config.item;
 
 import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
@@ -30,8 +30,13 @@ public class CommandItemConfig {
             If such a thing happens, it cannot be loaded file
             """)
     private ItemStack itemStack;
-
+    @Comment("""
+            Item display name
+            """)
     private String displayName = "";
+    @Comment("""
+            Item lore
+            """)
     private List<String> lore = new ArrayList<>();
     @Comment("""
             ##### DO NOT EDIT THIS SECTION #####
@@ -39,11 +44,12 @@ public class CommandItemConfig {
     private Key key = Key.key("key:value");
     @Comment("""
             The command can be executed as many times as specified in this field
-            Entering a number below -1 disables this feature
+            Entering a number below -1 disable this feature
             """)
     private int maxUses = 0;
     private boolean stackable = true;
     private boolean placeable = true;
+    private int coolTime = 0;
     @Comment("""
             Specifies the command to be executed from player
             """)

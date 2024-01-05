@@ -7,7 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
-import github.tyonakaisan.commanditem.config.primary.CommandItemConfig;
+import github.tyonakaisan.commanditem.config.item.CommandItemConfig;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.inventory.ItemStack;

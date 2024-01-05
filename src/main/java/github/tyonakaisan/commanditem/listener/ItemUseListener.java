@@ -5,7 +5,10 @@ import github.tyonakaisan.commanditem.CommandItem;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
+import github.tyonakaisan.commanditem.item.ItemCoolTimeManager;
 import github.tyonakaisan.commanditem.util.ActionUtils;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Formatter;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -26,16 +29,19 @@ public final class ItemUseListener implements Listener {
     private final CommandItem commandItem;
     private final Convert convert;
     private final CommandItemRegistry commandItemRegistry;
+    private final ItemCoolTimeManager itemCoolTimeManager;
 
     @Inject
     ItemUseListener(
             final CommandItem commandItem,
             final Convert convert,
-            final CommandItemRegistry commandItemRegistry
+            final CommandItemRegistry commandItemRegistry,
+            final ItemCoolTimeManager itemCoolTimeManager
     ) {
         this.commandItem = commandItem;
         this.convert = convert;
         this.commandItemRegistry = commandItemRegistry;
+        this.itemCoolTimeManager = itemCoolTimeManager;
     }
 
     @EventHandler
@@ -46,6 +52,15 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item) && this.convert.checkInternalCoolTime(player.getUniqueId())) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.fromBukkitAction(event.getAction());
+
+            // 別枠
+            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())) {
+                var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
+                player.sendMessage(MiniMessage.miniMessage().deserialize( "<red>This item is on cooltime for <time>s</red>",
+                        Formatter.number("time", timeLeft.toSeconds() + 1)));
+                event.setCancelled(true);
+                return;
+            }
 
             this.execute(player, Objects.requireNonNull(event.getHand()), item, commandsItem, action);
 
@@ -64,6 +79,15 @@ public final class ItemUseListener implements Listener {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.CONSUME;
 
+            // 別枠
+            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())) {
+                var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
+                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item is on cooltime for <time>s</red>",
+                        Formatter.number("time", timeLeft.toSeconds() + 1)));
+                event.setCancelled(true);
+                return;
+            }
+
             this.execute(player, Objects.requireNonNull(event.getHand()), item, commandsItem, action);
         }
     }
@@ -76,6 +100,15 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item)) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.PLACE;
+
+            // 別枠
+            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())) {
+                var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
+                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item is on cooltime for <time>s</red>",
+                        Formatter.number("time", timeLeft.toSeconds() + 1)));
+                event.setCancelled(true);
+                return;
+            }
 
             this.execute(player, Objects.requireNonNull(event.getHand()), item, commandsItem, action);
         }

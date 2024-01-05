@@ -20,6 +20,7 @@ import org.intellij.lang.annotations.Subst;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 
 @Singleton
@@ -29,17 +30,21 @@ public final class Convert {
     private final Path dataDirectory;
     private final CommandItem commandItem;
     private final CommandItemRegistry commandItemRegistry;
+    private final ItemCoolTimeManager itemCoolTimeManager;
+
     private final Map<UUID, Long> internalCoolTime = new HashMap<>();
 
     @Inject
     Convert(
             final Path dataDirectory,
             final CommandItem commandItem,
-            final CommandItemRegistry commandItemRegistry
+            final CommandItemRegistry commandItemRegistry,
+            final ItemCoolTimeManager itemCoolTimeManager
     ) {
         this.dataDirectory = dataDirectory;
         this.commandItem = commandItem;
         this.commandItemRegistry = commandItemRegistry;
+        this.itemCoolTimeManager = itemCoolTimeManager;
 
         try {
             this.commandItemRegistry.reloadItemConfig();
@@ -105,12 +110,14 @@ public final class Convert {
 
         // 重ねれるアイテムの場合、カウント減らしたあとに分けると両方へってしまう（？）
         // 例：2こ(残り3)->一回使用&分ける->1こ(残り2)&1こ(残り2)
-        if (commandsItem.maxUses() <= -1) {
-            return cloneItem;
-        }
 
         if (pdc.has(NamespacedKeyUtils.usageKey())
                 && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {
+
+            if (commandsItem.maxUses() <= -1) {
+                return cloneItem;
+            }
+
             int counts = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER)) + 1;
 
             cloneItem.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
@@ -149,15 +156,26 @@ public final class Convert {
         return Objects.requireNonNull(this.commandItemRegistry.get(Key.key(keyValue, value)));
     }
 
-    public void executeCommand(CommandsItem item, Player player, ActionUtils.ItemAction itemAction) {
-        List<CustomCommand> byPlayerCommands = item.byPlayerCommands().get(itemAction) != null ?
-                Lists.newArrayList(item.byPlayerCommands().get(itemAction)) : Collections.emptyList();
+    public void executeCommand(CommandsItem commandsItem, Player player, ActionUtils.ItemAction itemAction) {
+        List<CustomCommand> byPlayerCommands = commandsItem.byPlayerCommands().get(itemAction) != null ?
+                Lists.newArrayList(commandsItem.byPlayerCommands().get(itemAction)) : Collections.emptyList();
 
-        List<CustomCommand> byConsoleCommands = item.byConsoleCommands().get(itemAction) != null ?
-                Lists.newArrayList(item.byConsoleCommands().get(itemAction)) : Collections.emptyList();
+        List<CustomCommand> byConsoleCommands = commandsItem.byConsoleCommands().get(itemAction) != null ?
+                Lists.newArrayList(commandsItem.byConsoleCommands().get(itemAction)) : Collections.emptyList();
 
-        byPlayerCommands.forEach(customCommand -> customCommand.repeatCommands(player, customCommand, this.commandItem, false));
+        var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
 
-        byConsoleCommands.forEach(customCommand -> customCommand.repeatCommands(player, customCommand, this.commandItem, true));
+        if (timeLeft.isZero() || timeLeft.isNegative()) {
+            byPlayerCommands.forEach(customCommand ->
+                    customCommand.repeatCommands(player, customCommand, this.commandItem, false));
+
+            byConsoleCommands.forEach(customCommand ->
+                    customCommand.repeatCommands(player, customCommand, this.commandItem, true));
+
+            if (!byPlayerCommands.isEmpty() || !byConsoleCommands.isEmpty()) {
+                this.itemCoolTimeManager.removeItemCoolTime(player.getUniqueId(), commandsItem.key());
+                this.itemCoolTimeManager.setItemCoolTime(player.getUniqueId(), commandsItem.key(), Duration.ofSeconds(commandsItem.coolTime()));
+            }
+        }
     }
 }
