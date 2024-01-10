@@ -49,7 +49,7 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
     private final BiMap<Key, CommandsItem> registeredItemMap = Maps.synchronizedBiMap(HashBiMap.create());
 
     @Inject
-    CommandItemRegistry(
+    public CommandItemRegistry(
             final Path dataDirectory,
             final ConfigFactory configFactory,
             final ComponentLogger logger
@@ -88,7 +88,7 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
             this.logger.info("Successfully {}.conf file created!", fileName);
 
         } catch (final ConfigurateException exception) {
-            exception.printStackTrace();
+            this.logger.error("Failed to create item config.", exception);
         }
 
     }
@@ -113,7 +113,7 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
                     });
                 this.logger.info("Successfully {} items loaded!", this.registeredItemMap.keySet().size());
         } catch (IOException e) {
-            e.printStackTrace();
+            this.logger.error("Failed to load config.", e);
         }
     }
 

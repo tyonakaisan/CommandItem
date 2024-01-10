@@ -35,7 +35,7 @@ public final class Convert {
     private final Map<UUID, Long> internalCoolTime = new HashMap<>();
 
     @Inject
-    Convert(
+    public Convert(
             final Path dataDirectory,
             final CommandItem commandItem,
             final CommandItemRegistry commandItemRegistry,
@@ -72,9 +72,9 @@ public final class Convert {
     public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, ActionUtils.ItemAction itemAction) {
         if (equipmentSlot == null) return;
         if (equipmentSlot == EquipmentSlot.HAND) {
-            player.getInventory().setItemInMainHand(updateCounts(item, itemAction, player));
+            player.getInventory().setItemInMainHand(this.updateCounts(item, itemAction, player));
         } else {
-            player.getInventory().setItemInOffHand(updateCounts(item, itemAction, player));
+            player.getInventory().setItemInOffHand(this.updateCounts(item, itemAction, player));
         }
     }
 
@@ -107,9 +107,6 @@ public final class Convert {
         var cloneItem = itemStack.clone();
         var pdc = cloneItem.getItemMeta().getPersistentDataContainer();
         var commandsItem = this.toCommandsItem(cloneItem);
-
-        // 重ねれるアイテムの場合、カウント減らしたあとに分けると両方へってしまう（？）
-        // 例：2こ(残り3)->一回使用&分ける->1こ(残り2)&1こ(残り2)
 
         if (pdc.has(NamespacedKeyUtils.usageKey())
                 && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {

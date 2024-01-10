@@ -32,7 +32,7 @@ public final class ItemUseListener implements Listener {
     private final ItemCoolTimeManager itemCoolTimeManager;
 
     @Inject
-    ItemUseListener(
+    public ItemUseListener(
             final CommandItem commandItem,
             final Convert convert,
             final CommandItemRegistry commandItemRegistry,

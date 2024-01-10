@@ -20,7 +20,7 @@ import static github.tyonakaisan.commanditem.item.CommandsItem.miniMessage;
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
 public record CustomCommand(
-        ActionUtils.CommandAction action,
+        ActionUtils.CommandAction type,
         List<String> commands,
         int repeat,
         int period,
@@ -45,7 +45,7 @@ public record CustomCommand(
                 if (runWeight() >= weight || runWeight() == 0) {
                     count++;
 
-                    switch (action()) {
+                    switch (type()) {
                         case COMMAND -> {
                             if (console) {
                                 CommandExecutor.executeByConsole(customCommand, player);

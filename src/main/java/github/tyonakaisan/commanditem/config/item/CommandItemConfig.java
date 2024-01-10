@@ -1,10 +1,12 @@
 package github.tyonakaisan.commanditem.config.item;
 
+import github.tyonakaisan.commanditem.item.CustomCommand;
 import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -29,7 +31,7 @@ public class CommandItemConfig {
             Some items may not convert correctly or may be missing data
             If such a thing happens, it cannot be loaded file
             """)
-    private ItemStack itemStack;
+    private ItemStack itemStack = new ItemStack(Material.AIR);
     @Comment("""
             Item display name
             """)
@@ -49,15 +51,18 @@ public class CommandItemConfig {
     private int maxUses = 0;
     private boolean stackable = true;
     private boolean placeable = true;
+    @Comment("""
+            Item cool time
+            """)
     private int coolTime = 0;
     @Comment("""
             Specifies the command to be executed from player
             """)
-    private Map<ActionUtils.ItemAction, List<String>> byPlayerCommands = Map.of();
+    private Map<ActionUtils.ItemAction, List<CustomCommand>> byPlayerCommands = Map.of();
     @Comment("""
             Specifies the command to be executed from console
             """)
-    private Map<ActionUtils.ItemAction, List<String>> byConsoleCommands = Map.of();
+    private Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands = Map.of();
 
     public void setKey(@Subst("value") final String value) {
         @Subst("key")
@@ -80,5 +85,4 @@ public class CommandItemConfig {
                 .map(text -> MiniMessage.miniMessage().serialize(text))
                 .toList();
     }
-
 }
