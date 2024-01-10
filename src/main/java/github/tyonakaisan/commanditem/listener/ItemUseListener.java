@@ -1,8 +1,6 @@
 package github.tyonakaisan.commanditem.listener;
 
 import com.google.inject.Inject;
-import github.tyonakaisan.commanditem.CommandItem;
-import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.item.ItemCoolTimeManager;
@@ -26,21 +24,16 @@ import java.util.Objects;
 
 @DefaultQualifier(NonNull.class)
 public final class ItemUseListener implements Listener {
-    private final CommandItem commandItem;
+
     private final Convert convert;
-    private final CommandItemRegistry commandItemRegistry;
     private final ItemCoolTimeManager itemCoolTimeManager;
 
     @Inject
     public ItemUseListener(
-            final CommandItem commandItem,
             final Convert convert,
-            final CommandItemRegistry commandItemRegistry,
             final ItemCoolTimeManager itemCoolTimeManager
     ) {
-        this.commandItem = commandItem;
         this.convert = convert;
-        this.commandItemRegistry = commandItemRegistry;
         this.itemCoolTimeManager = itemCoolTimeManager;
     }
 

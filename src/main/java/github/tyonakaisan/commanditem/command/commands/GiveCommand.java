@@ -6,7 +6,6 @@ import cloud.commandframework.bukkit.arguments.selector.MultiplePlayerSelector;
 import cloud.commandframework.bukkit.parsers.selector.MultiplePlayerSelectorArgument;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.Convert;
 import net.kyori.adventure.key.Key;
@@ -24,19 +23,16 @@ import java.util.Set;
 @DefaultQualifier(NonNull.class)
 public final class GiveCommand implements CommandItemCommand {
 
-    private final ConfigFactory configFactory;
     private final CommandItemRegistry commandItemRegistry;
     private final Convert convert;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public GiveCommand(
-            final ConfigFactory configFactory,
             final CommandItemRegistry commandItemRegistry,
             final Convert convert,
             final CommandManager<CommandSender> commandManager
     ) {
-        this.configFactory = configFactory;
         this.commandItemRegistry = commandItemRegistry;
         this.convert = convert;
         this.commandManager = commandManager;

@@ -19,7 +19,6 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 import org.intellij.lang.annotations.Subst;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 
@@ -27,7 +26,6 @@ import java.util.*;
 @DefaultQualifier(NonNull.class)
 public final class Convert {
 
-    private final Path dataDirectory;
     private final CommandItem commandItem;
     private final CommandItemRegistry commandItemRegistry;
     private final ItemCoolTimeManager itemCoolTimeManager;
@@ -36,12 +34,10 @@ public final class Convert {
 
     @Inject
     public Convert(
-            final Path dataDirectory,
             final CommandItem commandItem,
             final CommandItemRegistry commandItemRegistry,
             final ItemCoolTimeManager itemCoolTimeManager
     ) {
-        this.dataDirectory = dataDirectory;
         this.commandItem = commandItem;
         this.commandItemRegistry = commandItemRegistry;
         this.itemCoolTimeManager = itemCoolTimeManager;
