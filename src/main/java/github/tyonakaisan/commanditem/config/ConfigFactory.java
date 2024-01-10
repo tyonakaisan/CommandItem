@@ -3,14 +3,12 @@ package github.tyonakaisan.commanditem.config;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.primary.PrimaryConfig;
-import github.tyonakaisan.commanditem.config.serialisation.ColorSerializer;
 import github.tyonakaisan.commanditem.config.serialisation.ConfigurationSerializableSerializerConfigurate;
 import github.tyonakaisan.commanditem.config.serialisation.EnchantmentSerializerConfigurate;
 import github.tyonakaisan.commanditem.config.serialisation.ItemStackSerializerConfigurate;
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Color;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -34,7 +32,6 @@ public class ConfigFactory {
     private final ItemStackSerializerConfigurate itemStackSerializer;
     private final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer;
     private final EnchantmentSerializerConfigurate enchantmentSerializer;
-    private final ColorSerializer colorSerializer;
 
     private @Nullable PrimaryConfig primaryConfig = null;
 
@@ -44,15 +41,13 @@ public class ConfigFactory {
             final ComponentLogger logger,
             final ItemStackSerializerConfigurate itemStackSerializer,
             final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer,
-            final EnchantmentSerializerConfigurate enchantmentSerializer,
-            final ColorSerializer colorSerializer
+            final EnchantmentSerializerConfigurate enchantmentSerializer
             ) {
         this.dataDirectory = dataDirectory;
         this.logger = logger;
         this.itemStackSerializer = itemStackSerializer;
         this.configurationSerializableSerializer = configurationSerializableSerializer;
         this.enchantmentSerializer = enchantmentSerializer;
-        this.colorSerializer = colorSerializer;
     }
 
     public @Nullable PrimaryConfig reloadPrimaryConfig() {
@@ -92,7 +87,6 @@ public class ConfigFactory {
                                     .register(ItemStack.class, this.itemStackSerializer)
                                     .register(ConfigurationSerializable.class, this.configurationSerializableSerializer)
                                     .register(EnchantmentSerializerConfigurate.Enchant.class, this.enchantmentSerializer)
-                                    .register(Color.class, this.colorSerializer)
                     );
                 })
                 .path(file)

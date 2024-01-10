@@ -3,8 +3,8 @@ package github.tyonakaisan.commanditem.config.serialisation;
 import com.destroystokyo.paper.profile.PlayerProfile;
 import com.destroystokyo.paper.profile.ProfileProperty;
 import com.google.inject.Inject;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Bukkit;
-import org.bukkit.Color;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.inventory.ItemStack;
@@ -21,16 +21,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @DefaultQualifier(NonNull.class)
+@SuppressWarnings("java:S3776")
 public class ConfigurationSerializableSerializerConfigurate implements TypeSerializer<ConfigurationSerializable> {
 
+    private final ComponentLogger logger;
     private static final String DISPLAY_NAME = "display-name";
     private static final String LORE = "lore";
     private static final String SKULL_TEXTURE = "skull-texture";
-    private static final String COLOR = "color";
 
     @Inject
-    public ConfigurationSerializableSerializerConfigurate() {
-        // Constructor for the injector.
+    public ConfigurationSerializableSerializerConfigurate(
+            final ComponentLogger logger
+    ) {
+        this.logger = logger;
     }
 
     // 未対応リスト
@@ -46,45 +49,30 @@ public class ConfigurationSerializableSerializerConfigurate implements TypeSeria
             var key = Objects.requireNonNull(serializableNode.key()).toString();
             var rawValue = Objects.requireNonNull(serializableNode.raw());
 
-            switch (key) {
-                // No deserialize of display names and lore here.
-
-                case SKULL_TEXTURE -> Optional.ofNullable(serializableNode.getString())
+            // No deserialize of displayName and lore here.
+            if (key.equals(SKULL_TEXTURE)) {
+                Optional.ofNullable(serializableNode.getString())
                         .ifPresent(texture -> {
                             var playerProfile = Bukkit.createProfile(UUID.randomUUID(), "commandItem");
                             var playerProperty = new ProfileProperty("textures", texture);
                             playerProfile.setProperty(playerProperty);
                             deSerializeMap.put("skull-owner", playerProfile);
                         });
+            } else {
+                deSerializeMap.put(key, rawValue);
 
-                // 使おうと思ったけど悩み
-                case COLOR -> Optional.ofNullable(serializableNode.get(Color.class))
-                        .ifPresent(color -> deSerializeMap.put(key, color));
+                if (rawValue instanceof Collection) {
+                    serializableNode.childrenList().forEach(child -> {
+                        if (Objects.requireNonNull(child.raw()) instanceof Map<?, ?> map) {
+                            Class<?> clazz = map.containsKey("v") ? ItemStack.class : ConfigurationSerializable.class;
 
-                default -> {
-                    deSerializeMap.put(key, rawValue);
-
-                    if (rawValue instanceof Collection) {
-                        serializableNode.childrenList().forEach(child -> {
-                            var raw = Objects.requireNonNull(child.raw());
-                            Class<?> clazz = ConfigurationSerializable.class;
-                            if (raw instanceof Map<?,?> map) {
-                                if (map.get("==").toString().equals("Color")) {
-                                    clazz = Color.class;
-                                }
-
-                                if (map.containsKey("v")) {
-                                    clazz = ItemStack.class;
-                                }
-
-                                try {
-                                    deSerializeMap.put(key, Objects.requireNonNull(serializableNode.getList(clazz)));
-                                } catch (SerializationException e) {
-                                    throw new RuntimeException(e);
-                                }
+                            try {
+                                deSerializeMap.put(key, Objects.requireNonNull(serializableNode.getList(clazz)));
+                            } catch (SerializationException e) {
+                                this.logger.error("", e);
                             }
-                        });
-                    }
+                        }
+                    });
                 }
             }
         }
@@ -124,7 +112,7 @@ public class ConfigurationSerializableSerializerConfigurate implements TypeSeria
                             try {
                                 node.node(key).appendListNode().set(collection);
                             } catch (SerializationException e) {
-                                throw new RuntimeException(e);
+                                this.logger.error("", e);
                             }
                         });
                         return;
