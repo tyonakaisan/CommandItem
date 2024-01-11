@@ -15,10 +15,7 @@ import org.intellij.lang.annotations.Subst;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Comment;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
@@ -48,7 +45,7 @@ public class CommandItemConfig {
             The command can be executed as many times as specified in this field
             Entering a number below -1 disable this feature
             """)
-    private int maxUses = 0;
+    private int maxUses = 1;
     private boolean stackable = true;
     private boolean placeable = true;
     @Comment("""
@@ -62,7 +59,8 @@ public class CommandItemConfig {
     @Comment("""
             Specifies the command to be executed from console
             """)
-    private Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands = Map.of();
+    private Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands = Map.of(ActionUtils.ItemAction.RIGHT_CLICK,
+            List.of(new CustomCommand(ActionUtils.CommandAction.COMMAND, List.of(""), 0, 0, 0, 0)));
 
     public void setKey(@Subst("value") final String value) {
         @Subst("key")
@@ -72,12 +70,17 @@ public class CommandItemConfig {
 
     public void setItemStack(final ItemStack itemStack) {
         this.itemStack = itemStack;
-        this.setDisplayName(itemStack.getItemMeta().displayName());
+        this.setDisplayName(itemStack);
         this.setLore(itemStack.getItemMeta().lore());
     }
 
-    private void setDisplayName(@Nullable final Component displayName) {
-        this.displayName = displayName == null ? "" : MiniMessage.miniMessage().serialize(displayName);
+    private void setDisplayName(final ItemStack itemStack) {
+        @Nullable Component metaDisplayName = itemStack.getItemMeta().displayName();
+        var itemTranslationKey = itemStack.getType().getItemTranslationKey() == null ?
+                "" : String.format("<lang:%s>", itemStack.getType().getItemTranslationKey());
+
+        this.displayName = metaDisplayName == null ?
+                itemTranslationKey : MiniMessage.miniMessage().serialize(metaDisplayName);
     }
 
     private void setLore(@Nullable final List<Component> lore) {
