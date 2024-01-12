@@ -14,22 +14,20 @@ public final class CommandExecutor {
         throw new AssertionError();
     }
 
-    private static final String PLAYER = "<player>";
-
     public static void executeByPlayer(String command, Player player) {
-        player.performCommand(command.replace(PLAYER, player.getName()));
+        player.performCommand(command);
     }
 
     public static void executeByPlayer(CustomCommand customCommand, Player player) {
-        customCommand.commands().forEach(command -> executeByPlayer(command, player));
+        customCommand.commands(player).forEach(command -> executeByPlayer(command, player));
     }
 
-    public static void executeByConsole(String command, Player player) {
-        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command.replace(PLAYER, player.getName()));
+    public static void executeByConsole(String command) {
+        Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command);
     }
 
     public static void executeByConsole(CustomCommand customCommand, Player player) {
-        customCommand.commands().forEach(command -> executeByConsole(command, player));
+        customCommand.commands(player).forEach(CommandExecutor::executeByConsole);
     }
 
     public static void executeMessage(Component message, Player player) {

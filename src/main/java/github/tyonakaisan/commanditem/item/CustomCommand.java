@@ -28,6 +28,13 @@ public record CustomCommand(
         double runWeight
 ) {
 
+    public List<String> commands(Player player) {
+        return this.commands.stream().map(text -> {
+            var papiParser = PlaceholderAPI.setPlaceholders(player, text);
+            return papiParser.replace("<player>", player.getName());
+        }).toList();
+    }
+
     public List<Component> messages(Player player) {
         return this.commands.stream().map(text -> {
             var papiParser = PlaceholderAPI.setPlaceholders(player, text);
