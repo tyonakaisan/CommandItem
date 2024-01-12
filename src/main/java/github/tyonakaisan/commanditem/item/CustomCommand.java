@@ -3,9 +3,8 @@ package github.tyonakaisan.commanditem.item;
 import github.tyonakaisan.commanditem.CommandItem;
 import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.CommandExecutor;
-import me.clip.placeholderapi.PlaceholderAPI;
+import github.tyonakaisan.commanditem.util.PlaceholderUtils;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -14,9 +13,6 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-
-import static github.tyonakaisan.commanditem.item.CommandsItem.defaultComponent;
-import static github.tyonakaisan.commanditem.item.CommandsItem.miniMessage;
 
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
@@ -30,17 +26,15 @@ public record CustomCommand(
 ) {
 
     public List<String> commands(Player player) {
-        return this.commands.stream().map(text -> {
-            var papiParser = PlaceholderAPI.setPlaceholders(player, text);
-            return PlainTextComponentSerializer.plainText().serialize(miniMessage(player).deserialize(papiParser));
-        }).toList();
+        return this.commands.stream()
+                .map(text -> PlaceholderUtils.getString(player, text))
+                .toList();
     }
 
     public List<Component> messages(Player player) {
-        return this.commands.stream().map(text -> {
-            var papiParser = PlaceholderAPI.setPlaceholders(player, text);
-            return defaultComponent.append(miniMessage(player).deserialize(papiParser));
-        }).toList();
+        return this.commands.stream()
+                .map(text -> PlaceholderUtils.getComponent(player, text))
+                .toList();
     }
 
     public void repeatCommands(Player player, CustomCommand customCommand, CommandItem commandItem, boolean console) {
