@@ -19,12 +19,12 @@ import static java.util.Objects.requireNonNull;
 
 
 @DefaultQualifier(NonNull.class)
-public final class EnchantmentSerializerConfigurate implements TypeSerializer<EnchantmentSerializerConfigurate.Enchant> {
+public final class EnchantmentSerializer implements TypeSerializer<EnchantmentSerializer.Enchant> {
 
     private final ComponentLogger logger;
 
     @Inject
-    public EnchantmentSerializerConfigurate(final ComponentLogger logger) {
+    public EnchantmentSerializer(final ComponentLogger logger) {
         this.logger = logger;
     }
 

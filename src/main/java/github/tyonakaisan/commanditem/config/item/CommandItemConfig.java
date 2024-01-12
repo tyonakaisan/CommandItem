@@ -60,7 +60,7 @@ public class CommandItemConfig {
             Specifies the command to be executed from console
             """)
     private Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands = Map.of(ActionUtils.ItemAction.RIGHT_CLICK,
-            List.of(new CustomCommand(ActionUtils.CommandAction.COMMAND, List.of(""), "0", "0", "0", "0")));
+            List.of(new CustomCommand(ActionUtils.CommandAction.COMMAND, List.of(), "0", "0", "0", "0")));
 
     public void setKey(@Subst("value") final String value) {
         @Subst("key")

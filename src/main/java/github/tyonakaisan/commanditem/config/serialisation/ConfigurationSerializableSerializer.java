@@ -22,7 +22,7 @@ import java.util.*;
 
 @DefaultQualifier(NonNull.class)
 @SuppressWarnings("java:S3776")
-public class ConfigurationSerializableSerializerConfigurate implements TypeSerializer<ConfigurationSerializable> {
+public class ConfigurationSerializableSerializer implements TypeSerializer<ConfigurationSerializable> {
 
     private final ComponentLogger logger;
     private static final String DISPLAY_NAME = "display-name";
@@ -30,7 +30,7 @@ public class ConfigurationSerializableSerializerConfigurate implements TypeSeria
     private static final String SKULL_TEXTURE = "skull-texture";
 
     @Inject
-    public ConfigurationSerializableSerializerConfigurate(
+    public ConfigurationSerializableSerializer(
             final ComponentLogger logger
     ) {
         this.logger = logger;

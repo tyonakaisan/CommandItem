@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @DefaultQualifier(NonNull.class)
-public final class ItemStackSerializerConfigurate implements TypeSerializer<ItemStack> {
+public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
     private final ComponentLogger logger;
 
@@ -28,7 +28,7 @@ public final class ItemStackSerializerConfigurate implements TypeSerializer<Item
     private static final String ITEM_META = "item-meta";
 
     @Inject
-    public ItemStackSerializerConfigurate(final ComponentLogger logger) {
+    public ItemStackSerializer(final ComponentLogger logger) {
         this.logger = logger;
     }
 

@@ -3,9 +3,9 @@ package github.tyonakaisan.commanditem.config;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.primary.PrimaryConfig;
-import github.tyonakaisan.commanditem.config.serialisation.ConfigurationSerializableSerializerConfigurate;
-import github.tyonakaisan.commanditem.config.serialisation.EnchantmentSerializerConfigurate;
-import github.tyonakaisan.commanditem.config.serialisation.ItemStackSerializerConfigurate;
+import github.tyonakaisan.commanditem.config.serialisation.ConfigurationSerializableSerializer;
+import github.tyonakaisan.commanditem.config.serialisation.EnchantmentSerializer;
+import github.tyonakaisan.commanditem.config.serialisation.ItemStackSerializer;
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -29,9 +29,9 @@ public class ConfigFactory {
     private final Path dataDirectory;
     private final ComponentLogger logger;
 
-    private final ItemStackSerializerConfigurate itemStackSerializer;
-    private final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer;
-    private final EnchantmentSerializerConfigurate enchantmentSerializer;
+    private final ItemStackSerializer itemStackSerializer;
+    private final ConfigurationSerializableSerializer configurationSerializableSerializer;
+    private final EnchantmentSerializer enchantmentSerializer;
 
     private @Nullable PrimaryConfig primaryConfig = null;
 
@@ -39,9 +39,9 @@ public class ConfigFactory {
     public ConfigFactory(
             final Path dataDirectory,
             final ComponentLogger logger,
-            final ItemStackSerializerConfigurate itemStackSerializer,
-            final ConfigurationSerializableSerializerConfigurate configurationSerializableSerializer,
-            final EnchantmentSerializerConfigurate enchantmentSerializer
+            final ItemStackSerializer itemStackSerializer,
+            final ConfigurationSerializableSerializer configurationSerializableSerializer,
+            final EnchantmentSerializer enchantmentSerializer
             ) {
         this.dataDirectory = dataDirectory;
         this.logger = logger;
@@ -86,7 +86,7 @@ public class ConfigFactory {
                                     .registerAll(kyoriSerializer.serializers())
                                     .register(ItemStack.class, this.itemStackSerializer)
                                     .register(ConfigurationSerializable.class, this.configurationSerializableSerializer)
-                                    .register(EnchantmentSerializerConfigurate.Enchant.class, this.enchantmentSerializer)
+                                    .register(EnchantmentSerializer.Enchant.class, this.enchantmentSerializer)
                     );
                 })
                 .path(file)
