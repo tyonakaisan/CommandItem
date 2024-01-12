@@ -42,7 +42,7 @@ dependencies {
     paperLibrary("co.aikar", "taskchain-bukkit", "3.7.2")
 }
 
-version = "1.0.1-SNAPSHOT"
+version = "1.1.0-SNAPSHOT"
 
 paper {
     val mainPackage = "github.tyonakaisan.commanditem"
