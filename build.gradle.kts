@@ -80,6 +80,7 @@ tasks {
         github("MiniPlaceholders", "MiniPlaceholders", "2.2.3", "MiniPlaceholders-Paper-2.2.3.jar")
         github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
         github("MiniPlaceholders", "Player-Expansion", "1.2.0", "MiniPlaceholders-Player-Expansion-1.2.0.jar")
+        github("MiniPlaceholders", "Expressions-Expansion", "1.2.0", "Expressions-Expansion-1.2.0.jar")
     }
 
     compileJava {
