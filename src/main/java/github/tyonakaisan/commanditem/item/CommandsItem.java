@@ -1,6 +1,7 @@
 package github.tyonakaisan.commanditem.item;
 
 import github.tyonakaisan.commanditem.util.ActionUtils;
+import io.github.miniplaceholders.api.MiniPlaceholders;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -41,6 +42,8 @@ public record CommandsItem(
         return MiniMessage.builder()
                 .tags(TagResolver.builder()
                         .tag("player", Tag.inserting(player.displayName()))
+                        .resolver(MiniPlaceholders.getGlobalPlaceholders())
+                        .resolver(MiniPlaceholders.getAudiencePlaceholders(player))
                         .resolver(TagResolver.standard())
                         .build())
                 .build();

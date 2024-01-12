@@ -5,6 +5,7 @@ import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.CommandExecutor;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -31,7 +32,7 @@ public record CustomCommand(
     public List<String> commands(Player player) {
         return this.commands.stream().map(text -> {
             var papiParser = PlaceholderAPI.setPlaceholders(player, text);
-            return papiParser.replace("<player>", player.getName());
+            return PlainTextComponentSerializer.plainText().serialize(miniMessage(player).deserialize(papiParser));
         }).toList();
     }
 

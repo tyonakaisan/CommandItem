@@ -35,6 +35,7 @@ dependencies {
 
     // Plugins
     compileOnly("me.clip", "placeholderapi", "2.11.5")
+    compileOnly("io.github.miniplaceholders", "miniplaceholders-api", "2.2.3")
 
     // Utils
     paperLibrary("com.google.inject", "guice", "7.0.0")
@@ -59,6 +60,10 @@ paper {
         register("PlaceholderAPI") {
             required = false
         }
+
+        register("MiniPlaceholders") {
+            required = false
+        }
     }
 }
 
@@ -70,6 +75,9 @@ tasks {
         url("https://ci.lucko.me/job/spark/396/artifact/spark-bukkit/build/libs/spark-1.10.55-bukkit.jar")
         // PlaceholderAPI
         hangar("PlaceholderAPI", "2.11.5")
+        // MiniPlaceholders
+        github("MiniPlaceholders", "MiniPlaceholders", "2.2.3", "MiniPlaceholders-Paper-2.2.3.jar")
+        github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
     }
 
     compileJava {
