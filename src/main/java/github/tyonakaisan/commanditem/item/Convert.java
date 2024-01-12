@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.CommandItem;
+import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.ItemBuilder;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
@@ -27,6 +28,7 @@ import java.util.*;
 public final class Convert {
 
     private final CommandItem commandItem;
+    private final ConfigFactory configFactory;
     private final CommandItemRegistry commandItemRegistry;
     private final ItemCoolTimeManager itemCoolTimeManager;
 
@@ -35,10 +37,12 @@ public final class Convert {
     @Inject
     public Convert(
             final CommandItem commandItem,
+            final ConfigFactory configFactory,
             final CommandItemRegistry commandItemRegistry,
             final ItemCoolTimeManager itemCoolTimeManager
     ) {
         this.commandItem = commandItem;
+        this.configFactory = configFactory;
         this.commandItemRegistry = commandItemRegistry;
         this.itemCoolTimeManager = itemCoolTimeManager;
 
@@ -63,15 +67,6 @@ public final class Convert {
             return false;
         }
         return currentCount > this.toCommandsItem(itemStack).maxUses();
-    }
-
-    public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, ActionUtils.ItemAction itemAction) {
-        if (equipmentSlot == null) return;
-        if (equipmentSlot == EquipmentSlot.HAND) {
-            player.getInventory().setItemInMainHand(this.updateCounts(item, itemAction, player));
-        } else {
-            player.getInventory().setItemInOffHand(this.updateCounts(item, itemAction, player));
-        }
     }
 
     // 2回callされる対策　ﾕﾙｾﾅｲ…
@@ -99,13 +94,27 @@ public final class Convert {
         this.internalCoolTime.computeIfAbsent(uuid, k -> System.currentTimeMillis());
     }
 
+    public void setPlayerHandItem(Player player, @Nullable EquipmentSlot equipmentSlot, ItemStack item, ActionUtils.ItemAction itemAction) {
+        if (equipmentSlot == null) return;
+        if (equipmentSlot == EquipmentSlot.HAND) {
+            player.getInventory().setItemInMainHand(this.updateCounts(item, itemAction, player));
+        } else {
+            player.getInventory().setItemInOffHand(this.updateCounts(item, itemAction, player));
+        }
+    }
+
     private ItemStack updateCounts(ItemStack itemStack, ActionUtils.ItemAction itemAction, Player player) {
         var cloneItem = itemStack.clone();
         var pdc = cloneItem.getItemMeta().getPersistentDataContainer();
         var commandsItem = this.toCommandsItem(cloneItem);
+        var alertType = Objects.requireNonNull(this.configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
         if (pdc.has(NamespacedKeyUtils.usageKey())
                 && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {
+
+            if (alertType.equals("vanilla")) {
+                player.setCooldown(cloneItem.getType(), commandsItem.coolTime() * 20);
+            }
 
             if (commandsItem.maxUses() <= -1) {
                 return cloneItem;

@@ -1,6 +1,7 @@
 package github.tyonakaisan.commanditem.listener;
 
 import com.google.inject.Inject;
+import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.item.ItemCoolTimeManager;
@@ -25,14 +26,17 @@ import java.util.Objects;
 @DefaultQualifier(NonNull.class)
 public final class ItemUseListener implements Listener {
 
+    private final ConfigFactory configFactory;
     private final Convert convert;
     private final ItemCoolTimeManager itemCoolTimeManager;
 
     @Inject
     public ItemUseListener(
+            final ConfigFactory configFactory,
             final Convert convert,
             final ItemCoolTimeManager itemCoolTimeManager
     ) {
+        this.configFactory = configFactory;
         this.convert = convert;
         this.itemCoolTimeManager = itemCoolTimeManager;
     }
@@ -45,9 +49,11 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item) && this.convert.checkInternalCoolTime(player.getUniqueId())) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.fromBukkitAction(event.getAction());
+            var alertType = Objects.requireNonNull(configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
             // 別枠
-            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())) {
+            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
+                    && alertType.equals("message")) {
                 var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
                 player.sendMessage(MiniMessage.miniMessage().deserialize( "<red>This item is on cooltime for <time>s</red>",
                         Formatter.number("time", timeLeft.toSeconds() + 1)));
@@ -71,9 +77,11 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item)) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.CONSUME;
+            var alertType = Objects.requireNonNull(configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
             // 別枠
-            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())) {
+            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
+                    && alertType.equals("message")) {
                 var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
                 player.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item is on cooltime for <time>s</red>",
                         Formatter.number("time", timeLeft.toSeconds() + 1)));
@@ -93,9 +101,11 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item)) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.PLACE;
+            var alertType = Objects.requireNonNull(configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
             // 別枠
-            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())) {
+            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
+                    && alertType.equals("message")) {
                 var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
                 player.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item is on cooltime for <time>s</red>",
                         Formatter.number("time", timeLeft.toSeconds() + 1)));
@@ -106,7 +116,6 @@ public final class ItemUseListener implements Listener {
             this.execute(player, Objects.requireNonNull(event.getHand()), item, commandsItem, action);
         }
     }
-
 
     private void execute(Player player, EquipmentSlot hand, ItemStack itemStack, CommandsItem commandsItem, ActionUtils.ItemAction action) {
         this.convert.setPlayerHandItem(player, hand, itemStack, action);

@@ -7,5 +7,10 @@ import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
 public class PrimaryConfig {
-    //todo
+
+    private CoolTimeSettings coolTime = new CoolTimeSettings();
+
+    public CoolTimeSettings coolTime() {
+        return this.coolTime;
+    }
 }
