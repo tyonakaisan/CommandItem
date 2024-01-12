@@ -19,15 +19,15 @@ import java.util.concurrent.ThreadLocalRandom;
 public record CustomCommand(
         ActionUtils.CommandAction action,
         List<String> commands,
-        int repeat,
-        int period,
-        int delay,
-        double runWeight
+        String repeat,
+        String period,
+        String delay,
+        String runWeight
 ) {
 
     public List<String> commands(Player player) {
         return this.commands.stream()
-                .map(text -> PlaceholderUtils.getString(player, text))
+                .map(text -> PlaceholderUtils.getPlainText(player, text))
                 .toList();
     }
 
@@ -37,14 +37,31 @@ public record CustomCommand(
                 .toList();
     }
 
+    public double repeat(Player player) {
+        return PlaceholderUtils.calculate(player, this.repeat);
+    }
+
+    public double period(Player player) {
+        return PlaceholderUtils.calculate(player, this.period);
+    }
+
+    public double delay(Player player) {
+        return PlaceholderUtils.calculate(player, this.delay);
+    }
+
+    public double runWeight(Player player) {
+        return PlaceholderUtils.calculate(player, this.runWeight);
+    }
+
     public void repeatCommands(Player player, CustomCommand customCommand, CommandItem commandItem, boolean console) {
         new BukkitRunnable() {
-            final int repeatCounts = Math.min(this.repeatCounts, 100);
+            final int repeatCounts = Math.min((int) repeat(player), 100);
+            final double weight = ThreadLocalRandom.current().nextDouble(0.0, 1.0);
             int count = 0;
-            final double weight = ThreadLocalRandom.current().nextDouble();
+
             @Override
             public void run() {
-                if (runWeight() >= weight || runWeight() == 0) {
+                if (runWeight(player) >= weight || runWeight(player) == 0) {
                     count++;
 
                     switch (action()) {
@@ -62,6 +79,6 @@ public record CustomCommand(
                     if (count >= repeatCounts) this.cancel();
                 }
             }
-        }.runTaskTimer(commandItem, this.delay, this.period);
+        }.runTaskTimer(commandItem, (long) delay(player), (long) period(player));
     }
 }

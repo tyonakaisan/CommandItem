@@ -59,14 +59,14 @@ public final class Convert {
         return pdc.has(NamespacedKeyUtils.idKey());
     }
 
-    public boolean isMaxUsesExceeded(ItemStack itemStack) {
+    public boolean isMaxUsesExceeded(ItemStack itemStack, Player player) {
         if (!this.isCommandItem(itemStack)) return false;
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
         int currentCount = pdc.getOrDefault(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
-        if (this.toCommandsItem(itemStack).maxUses() <= -1) {
+        if (this.toCommandsItem(itemStack).maxUses(player) <= -1) {
             return false;
         }
-        return currentCount > this.toCommandsItem(itemStack).maxUses();
+        return currentCount > this.toCommandsItem(itemStack).maxUses(player);
     }
 
     // 2回callされる対策　ﾕﾙｾﾅｲ…
@@ -113,10 +113,10 @@ public final class Convert {
                 && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {
 
             if (alertType.equals("vanilla")) {
-                player.setCooldown(cloneItem.getType(), commandsItem.coolTime() * 20);
+                player.setCooldown(cloneItem.getType(), commandsItem.coolTime(player) * 20);
             }
 
-            if (commandsItem.maxUses() <= -1) {
+            if (commandsItem.maxUses(player) <= -1) {
                 return cloneItem;
             }
 
@@ -124,7 +124,7 @@ public final class Convert {
 
             cloneItem.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
 
-            if (counts >= commandsItem.maxUses()) {
+            if (counts >= commandsItem.maxUses(player)) {
                 return cloneItem.getAmount() == 1 ? new ItemStack(Material.AIR) : ItemBuilder.of(this.toItemStack(this.toCommandsItem(cloneItem), player))
                         .amount(cloneItem.getAmount() - 1)
                         .build();
@@ -176,7 +176,7 @@ public final class Convert {
 
             if (!byPlayerCommands.isEmpty() || !byConsoleCommands.isEmpty()) {
                 this.itemCoolTimeManager.removeItemCoolTime(player.getUniqueId(), commandsItem.key());
-                this.itemCoolTimeManager.setItemCoolTime(player.getUniqueId(), commandsItem.key(), Duration.ofSeconds(commandsItem.coolTime()));
+                this.itemCoolTimeManager.setItemCoolTime(player.getUniqueId(), commandsItem.key(), Duration.ofSeconds(commandsItem.coolTime(player)));
             }
         }
     }

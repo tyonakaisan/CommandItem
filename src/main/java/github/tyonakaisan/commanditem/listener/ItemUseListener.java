@@ -120,7 +120,7 @@ public final class ItemUseListener implements Listener {
     private void execute(Player player, EquipmentSlot hand, ItemStack itemStack, CommandsItem commandsItem, ActionUtils.ItemAction action) {
         this.convert.setPlayerHandItem(player, hand, itemStack, action);
 
-        if (this.convert.isMaxUsesExceeded(itemStack)) {
+        if (this.convert.isMaxUsesExceeded(itemStack, player)) {
             player.sendRichMessage("<red>最大使用回数を超えているためコマンドは実行されません!");
             return;
         }

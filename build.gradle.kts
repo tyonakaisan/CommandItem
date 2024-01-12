@@ -40,6 +40,7 @@ dependencies {
     // Utils
     paperLibrary("com.google.inject", "guice", "7.0.0")
     paperLibrary("co.aikar", "taskchain-bukkit", "3.7.2")
+    paperLibrary("net.objecthunter", "exp4j", "0.4.8")
 }
 
 version = "1.1.0-SNAPSHOT"

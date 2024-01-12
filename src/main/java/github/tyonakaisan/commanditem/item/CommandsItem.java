@@ -20,10 +20,10 @@ public record CommandsItem(
         String displayName,
         List<String> lore,
         Key key,
-        int maxUses,
+        String maxUses,
         boolean stackable,
         boolean placeable,
-        int coolTime,
+        String coolTime,
         Map<ActionUtils.ItemAction, List<CustomCommand>> byPlayerCommands,
         Map<ActionUtils.ItemAction, List<CustomCommand>> byConsoleCommands
 ) {
@@ -36,5 +36,13 @@ public record CommandsItem(
         return this.lore.stream()
                 .map(text -> PlaceholderUtils.getComponent(player, text))
                 .toList();
+    }
+
+    public int maxUses(Player player) {
+        return (int) PlaceholderUtils.calculate(player, this.maxUses);
+    }
+
+    public int coolTime(Player player) {
+        return (int) PlaceholderUtils.calculate(player, this.coolTime);
     }
 }

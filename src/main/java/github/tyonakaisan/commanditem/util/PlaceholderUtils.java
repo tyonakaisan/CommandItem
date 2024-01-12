@@ -9,6 +9,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.objecthunter.exp4j.ExpressionBuilder;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -28,7 +29,7 @@ public final class PlaceholderUtils {
         return DEFAULT_COMPONENT;
     }
 
-    public static String getString(Player player, String string) {
+    public static String getPlainText(Player player, String string) {
         return PlainTextComponentSerializer.plainText()
                 .serialize(miniMessage(player)
                         .deserialize(papiParserString(player, string)));
@@ -36,6 +37,11 @@ public final class PlaceholderUtils {
 
     public static Component getComponent(Player player, String string) {
         return defaultComponent().append(miniMessage(player).deserialize(papiParserString(player, string)));
+    }
+
+    public static double calculate(Player player, String expression) {
+        var exp = new ExpressionBuilder(getPlainText(player, expression)).build();
+        return exp.evaluate();
     }
 
     private static String papiParserString(Player player, String string) {
