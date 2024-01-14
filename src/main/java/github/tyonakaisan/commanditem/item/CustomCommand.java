@@ -54,31 +54,62 @@ public record CustomCommand(
     }
 
     public void repeatCommands(Player player, CustomCommand customCommand, CommandItem commandItem, boolean console) {
-        new BukkitRunnable() {
-            final int repeatCounts = Math.min((int) repeat(player), 100);
-            final double weight = ThreadLocalRandom.current().nextDouble(0.0, 1.0);
-            int count = 0;
+        var period = this.period(player);
 
-            @Override
-            public void run() {
-                if (runWeight(player) >= weight || runWeight(player) == 0) {
-                    count++;
-
-                    switch (action()) {
-                        case COMMAND -> {
-                            if (console) {
-                                CommandExecutor.executeByConsole(customCommand, player);
-                            } else {
-                                CommandExecutor.executeByPlayer(customCommand, player);
-                            }
-                        }
-                        case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
-                        case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
-                    }
-
-                    if (count >= repeatCounts) this.cancel();
+        // periodが-1以下の場合はfor文
+        if (period <= -1) {
+            commandItem.getServer().getScheduler().runTaskLater(commandItem, () -> {
+                for (int i = 0; i < this.repeat(player); i++) {
+                    new CommandTask(customCommand, player, console).run();
                 }
+            }, (long) this.delay(player));
+        } else {
+            new CommandTask(customCommand, player, console).runTaskTimer(commandItem, (long) this.delay(player), (long) period);
+        }
+    }
+
+    private final class CommandTask extends BukkitRunnable {
+
+        private final CustomCommand customCommand;
+        private final Player player;
+        private final boolean console;
+        private final int repeatCounts;
+        private final double weight;
+
+        private int count;
+
+        private CommandTask(
+                final CustomCommand customCommand,
+                final Player player,
+                final boolean console
+        ) {
+            this.customCommand = customCommand;
+            this.player = player;
+            this.console = console;
+
+            this.repeatCounts = Math.min((int) this.customCommand.repeat(player), 100);
+            this.weight = ThreadLocalRandom.current().nextDouble(0.0, 1.0);
+        }
+
+        @Override
+        public void run() {
+            if (runWeight(player) >= weight || runWeight(player) == 0) {
+                count++;
+
+                switch (action()) {
+                    case COMMAND -> {
+                        if (console) {
+                            CommandExecutor.executeByConsole(customCommand, player);
+                        } else {
+                            CommandExecutor.executeByPlayer(customCommand, player);
+                        }
+                    }
+                    case MESSAGE -> CommandExecutor.executeMessage(customCommand, player);
+                    case BROAD_CAST -> CommandExecutor.executeBroadCast(customCommand, player);
+                }
+
+                if (count >= repeatCounts) this.cancel();
             }
-        }.runTaskTimer(commandItem, (long) delay(player), (long) period(player));
+        }
     }
 }
