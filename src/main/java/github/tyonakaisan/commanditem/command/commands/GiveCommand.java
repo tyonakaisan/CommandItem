@@ -8,11 +8,12 @@ import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.Convert;
+import github.tyonakaisan.commanditem.message.MessageManager;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.Formatter;
-import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.Tag;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -24,16 +25,19 @@ import java.util.Set;
 public final class GiveCommand implements CommandItemCommand {
 
     private final CommandItemRegistry commandItemRegistry;
+    private final MessageManager messageManager;
     private final Convert convert;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public GiveCommand(
             final CommandItemRegistry commandItemRegistry,
+            final MessageManager messageManager,
             final Convert convert,
             final CommandManager<CommandSender> commandManager
     ) {
         this.commandItemRegistry = commandItemRegistry;
+        this.messageManager = messageManager;
         this.convert = convert;
         this.commandManager = commandManager;
     }
@@ -65,10 +69,12 @@ public final class GiveCommand implements CommandItemCommand {
                     players.getPlayers().forEach(player -> {
                         var item = this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)), player);
                         var maxReceive = item.getMaxStackSize() * 36;
+                        TagResolver resolver;
                         if (count > maxReceive) {
-                            sender.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item max count is <max></red>",
-                                    Formatter.number("max", maxReceive)
-                            ));
+                            resolver = TagResolver.builder()
+                                    .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
+                                    .build();
+                            sender.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.give.error.max_count", resolver));
                             return;
                         }
 
@@ -81,16 +87,21 @@ public final class GiveCommand implements CommandItemCommand {
                             player.getInventory().addItem(item);
                         }
 
-                        sender.sendMessage(MiniMessage.miniMessage().deserialize("<white><player>に<white><display_name></white>を<count>個与えました</white>",
-                                Placeholder.parsed("player", player.getName()),
-                                Placeholder.component("display_name", this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)), player).displayName()),
-                                Formatter.number("count", count)
-                        ));
+                        resolver = TagResolver.builder()
+                                .tag("player",
+                                        Tag.selfClosingInserting(player.displayName()))
+                                .tag("display_name",
+                                        Tag.selfClosingInserting(this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)), player).displayName()))
+                                .tag("count",
+                                        Tag.selfClosingInserting(Component.text(count)))
+                                .build();
+
+                        sender.sendMessage(this.messageManager.translatable(MessageManager.Style.INFO, player, "command.give.info.give", resolver));
 
                         sender.playSound(Sound.sound()
-                                        .type(Key.key("minecraft:entity.item.pickup"))
-                                        .volume(0.3f)
-                                        .pitch(2f)
+                                .type(Key.key("minecraft:entity.item.pickup"))
+                                .volume(0.3f)
+                                .pitch(2f)
                                 .build());
                     });
                 })

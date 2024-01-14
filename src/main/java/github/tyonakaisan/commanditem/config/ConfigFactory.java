@@ -51,7 +51,7 @@ public class ConfigFactory {
     }
 
     public @Nullable PrimaryConfig reloadPrimaryConfig() {
-        this.logger.info("Reloading configuration file...");
+        this.logger.info("Reloading configuration...");
         try {
             this.primaryConfig = this.load(PrimaryConfig.class, "config.conf");
         } catch (final IOException exception) {

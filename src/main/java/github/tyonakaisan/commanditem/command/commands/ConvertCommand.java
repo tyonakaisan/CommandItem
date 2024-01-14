@@ -4,6 +4,7 @@ import cloud.commandframework.CommandManager;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
+import github.tyonakaisan.commanditem.message.MessageManager;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
@@ -20,16 +21,19 @@ import java.util.List;
 public final class ConvertCommand implements CommandItemCommand {
 
     private final ComponentLogger logger;
+    private final MessageManager messageManager;
     private final CommandItemRegistry commandItemRegistry;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public ConvertCommand(
             final ComponentLogger logger,
+            final MessageManager messageManager,
             final CommandItemRegistry commandItemRegistry,
             final CommandManager<CommandSender> commandManager
     ) {
         this.logger = logger;
+        this.messageManager = messageManager;
         this.commandItemRegistry = commandItemRegistry;
         this.commandManager = commandManager;
     }
@@ -48,25 +52,25 @@ public final class ConvertCommand implements CommandItemCommand {
                     final String fileName = handler.get("file_name");
                     final var player = (Player) handler.getSender();
                     final var item = player.getInventory().getItemInMainHand();
-                    final var pdc = item.getItemMeta().getPersistentDataContainer();
+
+                    if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
+                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.can_not_convert"));
+                        return;
+                    }
+
                     final var allKey = this.commandItemRegistry.keySet().stream()
                             .map(Key::value)
                             .toList();
 
                     if (allKey.contains(fileName)) {
-                        player.sendRichMessage("<red>This file name has already been created!</red>");
-                        return;
-                    }
-
-                    if (item.getType() == Material.AIR || pdc.has(NamespacedKeyUtils.idKey())) {
-                        player.sendRichMessage("<red>This item cannot be converted!</red>");
+                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.file_name_exists"));
                         return;
                     }
 
                     try {
                         this.commandItemRegistry.createItemConfig(fileName, item);
                         this.commandItemRegistry.reloadItemConfig();
-                        player.sendRichMessage("<green>Item converted!</green>");
+                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.SUCCESS, player, "command.convert.success.convert"));
                     } catch (IOException e) {
                         this.logger.error("Failed to convert item.", e);
                     }

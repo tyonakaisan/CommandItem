@@ -5,10 +5,14 @@ import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.item.ItemCoolTimeManager;
+import github.tyonakaisan.commanditem.message.MessageManager;
 import github.tyonakaisan.commanditem.util.ActionUtils;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.minimessage.tag.resolver.Formatter;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.Tag;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -27,16 +31,19 @@ import java.util.Objects;
 public final class ItemUseListener implements Listener {
 
     private final ConfigFactory configFactory;
+    private final MessageManager messageManager;
     private final Convert convert;
     private final ItemCoolTimeManager itemCoolTimeManager;
 
     @Inject
     public ItemUseListener(
             final ConfigFactory configFactory,
+            final MessageManager messageManager,
             final Convert convert,
             final ItemCoolTimeManager itemCoolTimeManager
     ) {
         this.configFactory = configFactory;
+        this.messageManager = messageManager;
         this.convert = convert;
         this.itemCoolTimeManager = itemCoolTimeManager;
     }
@@ -54,10 +61,7 @@ public final class ItemUseListener implements Listener {
             // 別枠
             if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
                     && alertType.equals("message")) {
-                var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
-                player.sendMessage(MiniMessage.miniMessage().deserialize( "<red>This item is on cooltime for <time>s</red>",
-                        Formatter.number("time", timeLeft.toSeconds() + 1)));
-                event.setCancelled(true);
+                this.eventCanceled(event, player, commandsItem.key());
                 return;
             }
 
@@ -82,10 +86,7 @@ public final class ItemUseListener implements Listener {
             // 別枠
             if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
                     && alertType.equals("message")) {
-                var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
-                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item is on cooltime for <time>s</red>",
-                        Formatter.number("time", timeLeft.toSeconds() + 1)));
-                event.setCancelled(true);
+                this.eventCanceled(event, player, commandsItem.key());
                 return;
             }
 
@@ -103,13 +104,9 @@ public final class ItemUseListener implements Listener {
             var action = ActionUtils.ItemAction.PLACE;
             var alertType = Objects.requireNonNull(configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
-            // 別枠
             if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
                     && alertType.equals("message")) {
-                var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), commandsItem.key());
-                player.sendMessage(MiniMessage.miniMessage().deserialize("<red>This item is on cooltime for <time>s</red>",
-                        Formatter.number("time", timeLeft.toSeconds() + 1)));
-                event.setCancelled(true);
+                this.eventCanceled(event, player, commandsItem.key());
                 return;
             }
 
@@ -121,10 +118,19 @@ public final class ItemUseListener implements Listener {
         this.convert.setPlayerHandItem(player, hand, itemStack, action);
 
         if (this.convert.isMaxUsesExceeded(itemStack, player)) {
-            player.sendRichMessage("<red>最大使用回数を超えているためコマンドは実行されません!");
+            player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "commanditem.error.max_uses_exceeded"));
             return;
         }
 
         this.convert.executeCommand(commandsItem, player, action);
+    }
+
+    private void eventCanceled(Cancellable cancellableEvent, Player player, Key key) {
+        var timeLeft = this.itemCoolTimeManager.getRemainingItemCoolTime(player.getUniqueId(), key);
+        var resolver = TagResolver.builder()
+                .tag("time", Tag.selfClosingInserting(Component.text(timeLeft.toSeconds() + 1)))
+                .build();
+        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "cooltime.error.during_cool_time", resolver));
+        cancellableEvent.setCancelled(true);
     }
 }
