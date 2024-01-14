@@ -37,7 +37,6 @@ public final class ItemBuilder<B extends ItemBuilder<B, M>, M extends ItemMeta> 
         this(new ItemStack(material));
     }
 
-    @SuppressWarnings("unchecked")
     private ItemBuilder(final ItemStack stack) {
         this.itemStack = stack.clone();
         this.itemMeta = (M) stack.getItemMeta();
@@ -255,7 +254,6 @@ public final class ItemBuilder<B extends ItemBuilder<B, M>, M extends ItemMeta> 
         return (B) this;
     }
 
-    @SuppressWarnings("unchecked")
     public B editMeta(final Consumer<M> consumer) {
         final M meta = (M) this.itemMeta.clone();
         consumer.accept(meta);

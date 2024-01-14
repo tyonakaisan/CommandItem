@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.primary.PrimaryConfig;
 import github.tyonakaisan.commanditem.config.serialisation.ConfigurationSerializableSerializer;
-import github.tyonakaisan.commanditem.config.serialisation.EnchantmentSerializer;
 import github.tyonakaisan.commanditem.config.serialisation.ItemStackSerializer;
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
@@ -31,7 +30,6 @@ public class ConfigFactory {
 
     private final ItemStackSerializer itemStackSerializer;
     private final ConfigurationSerializableSerializer configurationSerializableSerializer;
-    private final EnchantmentSerializer enchantmentSerializer;
 
     private @Nullable PrimaryConfig primaryConfig = null;
 
@@ -40,14 +38,14 @@ public class ConfigFactory {
             final Path dataDirectory,
             final ComponentLogger logger,
             final ItemStackSerializer itemStackSerializer,
-            final ConfigurationSerializableSerializer configurationSerializableSerializer,
-            final EnchantmentSerializer enchantmentSerializer
-            ) {
+            final ConfigurationSerializableSerializer configurationSerializableSerializer
+    ) {
         this.dataDirectory = dataDirectory;
         this.logger = logger;
         this.itemStackSerializer = itemStackSerializer;
         this.configurationSerializableSerializer = configurationSerializableSerializer;
-        this.enchantmentSerializer = enchantmentSerializer;
+
+        this.reloadPrimaryConfig();
     }
 
     public @Nullable PrimaryConfig reloadPrimaryConfig() {
@@ -86,7 +84,6 @@ public class ConfigFactory {
                                     .registerAll(kyoriSerializer.serializers())
                                     .register(ItemStack.class, this.itemStackSerializer)
                                     .register(ConfigurationSerializable.class, this.configurationSerializableSerializer)
-                                    .register(EnchantmentSerializer.Enchant.class, this.enchantmentSerializer)
                     );
                 })
                 .path(file)

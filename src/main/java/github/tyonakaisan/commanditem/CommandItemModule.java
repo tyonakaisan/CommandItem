@@ -6,9 +6,6 @@ import cloud.commandframework.paper.PaperCommandManager;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import github.tyonakaisan.commanditem.command.argument.KeyArgument;
-import io.leangen.geantyref.TypeToken;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
@@ -45,7 +42,6 @@ public final class CommandItemModule extends AbstractModule {
                     Function.identity(),
                     Function.identity()
             );
-            commandManager.parserRegistry().registerParserSupplier(TypeToken.get(Key.class), options -> new KeyArgument<>());
         } catch (final Exception exception) {
             throw new RuntimeException("Failed to initialize command manager.", exception);
         }

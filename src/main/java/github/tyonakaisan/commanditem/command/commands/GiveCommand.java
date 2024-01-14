@@ -7,6 +7,7 @@ import cloud.commandframework.bukkit.parsers.selector.MultiplePlayerSelectorArgu
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
+import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.message.MessageManager;
 import net.kyori.adventure.key.Key;
@@ -15,13 +16,17 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.intellij.lang.annotations.Subst;
 
-import java.util.Objects;
 import java.util.Set;
 
 @DefaultQualifier(NonNull.class)
+@SuppressWarnings("java:S1192")
 public final class GiveCommand implements CommandItemCommand {
 
     private final CommandItemRegistry commandItemRegistry;
@@ -49,10 +54,10 @@ public final class GiveCommand implements CommandItemCommand {
                 .permission("commanditem.command.give")
                 .senderType(CommandSender.class)
                 .argument(MultiplePlayerSelectorArgument.of("player"))
-                .argument(this.commandManager.argumentBuilder(Key.class, "key")
+                .argument(this.commandManager.argumentBuilder(String.class, "key")
                         .withSuggestionsProvider(
                                 ((context, string) -> {
-                                    final Set<Key> allArgs = commandItemRegistry.keySet();
+                                    final Set<Key> allArgs = this.commandItemRegistry.keySet();
                                     return allArgs.stream()
                                             .map(Key::asString)
                                             .toList();
@@ -63,42 +68,43 @@ public final class GiveCommand implements CommandItemCommand {
                 .handler(handler -> {
                     final var sender = handler.getSender();
                     final MultiplePlayerSelector players = handler.get("player");
-                    final var key = (Key) handler.get("key");
+                    final @Subst("value") String keyValue = handler.get("key");
+                    final var key = Key.key(keyValue);
                     final var count = (int) handler.getOptional("count").orElse(1);
 
                     players.getPlayers().forEach(player -> {
-                        var item = this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)), player);
-                        var maxReceive = item.getMaxStackSize() * 36;
-                        TagResolver resolver;
-                        if (count > maxReceive) {
-                            resolver = TagResolver.builder()
-                                    .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
-                                    .build();
-                            sender.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.give.error.max_count", resolver));
+                        @Nullable CommandsItem commandsItem = this.commandItemRegistry.get(key);
+
+                        if (commandsItem == null) {
+                            sender.sendMessage(this.messageManager.translatable(
+                                    MessageManager.Style.ERROR,
+                                    player,
+                                    "command.give.error.unknown_item",
+                                    TagResolver.builder()
+                                            .tag("item", Tag.selfClosingInserting(Component.text(key.asString())))
+                                            .build()));
                             return;
                         }
 
-                        if (!Objects.requireNonNull(this.commandItemRegistry.get(key)).stackable() || item.getMaxStackSize() == 1) {
-                            for (int i = 0; i < count; i++) {
-                                player.getInventory().addItem(item);
-                            }
-                        } else {
-                            item.setAmount(count);
-                            player.getInventory().addItem(item);
+                        var item = this.convert.toItemStack(commandsItem, player);
+
+                        if (this.isMaxStackSize(player, item, count)) {
+                            return;
                         }
 
-                        resolver = TagResolver.builder()
-                                .tag("player",
-                                        Tag.selfClosingInserting(player.displayName()))
-                                .tag("display_name",
-                                        Tag.selfClosingInserting(this.convert.toItemStack(Objects.requireNonNull(this.commandItemRegistry.get(key)), player).displayName()))
-                                .tag("count",
-                                        Tag.selfClosingInserting(Component.text(count)))
-                                .build();
+                        this.giveItem(player, count, commandsItem);
 
-                        sender.sendMessage(this.messageManager.translatable(MessageManager.Style.INFO, player, "command.give.info.give", resolver));
+                        sender.sendMessage(this.messageManager.translatable(
+                                MessageManager.Style.INFO,
+                                player,
+                                "command.give.info.give",
+                                TagResolver.builder()
+                                        .tag("player", Tag.selfClosingInserting(player.displayName()))
+                                        .tag("display_name", Tag.selfClosingInserting(item.displayName()))
+                                        .tag("count", Tag.selfClosingInserting(Component.text(count)))
+                                        .build()));
 
-                        sender.playSound(Sound.sound()
+                        player.playSound(Sound.sound()
                                 .type(Key.key("minecraft:entity.item.pickup"))
                                 .volume(0.3f)
                                 .pitch(2f)
@@ -107,5 +113,31 @@ public final class GiveCommand implements CommandItemCommand {
                 })
                 .build();
         this.commandManager.command(command);
+    }
+
+    private boolean isMaxStackSize(Player player, ItemStack itemStack, int count) {
+        var maxReceive = itemStack.getMaxStackSize() * 36;
+
+        if (count > maxReceive) {
+            var resolver = TagResolver.builder()
+                    .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
+                    .build();
+            player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.give.error.max_count", resolver));
+            return false;
+        }
+
+        return true;
+    }
+
+    private void giveItem(Player player, int count, CommandsItem commandsItem) {
+        var itemStack = this.convert.toItemStack(commandsItem, player);
+        if (!commandsItem.stackable() || itemStack.getMaxStackSize() == 1) {
+            for (int i = 0; i < count; i++) {
+                player.getInventory().addItem(itemStack);
+            }
+        } else {
+            itemStack.setAmount(count);
+            player.getInventory().addItem(itemStack);
+        }
     }
 }

@@ -53,10 +53,12 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
             final Path dataDirectory,
             final ConfigFactory configFactory,
             final ComponentLogger logger
-    ) {
+    ) throws IOException {
         this.dataDirectory = dataDirectory;
         this.configFactory = configFactory;
         this.logger = logger;
+
+        this.reloadItemConfig();
     }
 
     public void reloadItemConfig() throws IOException {

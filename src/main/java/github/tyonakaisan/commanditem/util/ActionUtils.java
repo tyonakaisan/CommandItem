@@ -4,13 +4,13 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
+@SuppressWarnings("unused")
 public final class ActionUtils {
 
     private ActionUtils() {
         throw new IllegalStateException("Utility class");
     }
 
-    @SuppressWarnings("unused")
     public enum ItemAction {
         RIGHT_CLICK,
         LEFT_CLICK,
@@ -27,7 +27,6 @@ public final class ActionUtils {
         }
     }
 
-    @SuppressWarnings("unused")
     public enum CommandAction {
         COMMAND,
         MESSAGE,

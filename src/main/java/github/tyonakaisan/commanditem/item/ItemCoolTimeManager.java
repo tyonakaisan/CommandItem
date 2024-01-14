@@ -18,6 +18,7 @@ public final class ItemCoolTimeManager {
 
     @Inject
     public ItemCoolTimeManager() {
+        // Empty
     }
 
     public void setItemCoolTime(UUID uuid, Key itemKey, Duration duration) {

@@ -5,9 +5,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
-public final class NamespacedKeyUtils {
+public final class NamespaceKeyUtils {
 
-    private NamespacedKeyUtils() {
+    private NamespaceKeyUtils() {
         throw new IllegalStateException("Utility class");
     }
 

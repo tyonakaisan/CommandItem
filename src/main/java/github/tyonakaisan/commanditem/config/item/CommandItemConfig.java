@@ -2,7 +2,7 @@ package github.tyonakaisan.commanditem.config.item;
 
 import github.tyonakaisan.commanditem.item.CustomCommand;
 import github.tyonakaisan.commanditem.util.ActionUtils;
-import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
+import github.tyonakaisan.commanditem.util.NamespaceKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -19,7 +19,7 @@ import java.util.*;
 
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused","FieldMayBeFinal"})
 public class CommandItemConfig {
 
     @Comment("""
@@ -64,7 +64,7 @@ public class CommandItemConfig {
 
     public void setKey(@Subst("value") final String value) {
         @Subst("key")
-        var keyValue = NamespacedKeyUtils.namespace();
+        var keyValue = NamespaceKeyUtils.namespace();
         this.key = Key.key(keyValue, value);
     }
 

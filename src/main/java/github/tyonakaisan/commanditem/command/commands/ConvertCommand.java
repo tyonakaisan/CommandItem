@@ -5,7 +5,7 @@ import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.message.MessageManager;
-import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
+import github.tyonakaisan.commanditem.util.NamespaceKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Material;
@@ -52,15 +52,14 @@ public final class ConvertCommand implements CommandItemCommand {
                     final String fileName = handler.get("file_name");
                     final var player = (Player) handler.getSender();
                     final var item = player.getInventory().getItemInMainHand();
-
-                    if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
-                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.can_not_convert"));
-                        return;
-                    }
-
                     final var allKey = this.commandItemRegistry.keySet().stream()
                             .map(Key::value)
                             .toList();
+
+                    if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespaceKeyUtils.idKey())) {
+                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.can_not_convert"));
+                        return;
+                    }
 
                     if (allKey.contains(fileName)) {
                         player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.file_name_exists"));

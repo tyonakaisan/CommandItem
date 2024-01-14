@@ -7,7 +7,7 @@ import github.tyonakaisan.commanditem.CommandItem;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.util.ActionUtils;
 import github.tyonakaisan.commanditem.util.ItemBuilder;
-import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
+import github.tyonakaisan.commanditem.util.NamespaceKeyUtils;
 import net.kyori.adventure.key.Key;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -19,7 +19,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.intellij.lang.annotations.Subst;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 
@@ -45,24 +44,18 @@ public final class Convert {
         this.configFactory = configFactory;
         this.commandItemRegistry = commandItemRegistry;
         this.itemCoolTimeManager = itemCoolTimeManager;
-
-        try {
-            this.commandItemRegistry.reloadItemConfig();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public boolean isCommandItem(@Nullable ItemStack itemStack) {
         if (itemStack == null) return false;
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        return pdc.has(NamespacedKeyUtils.idKey());
+        return pdc.has(NamespaceKeyUtils.idKey());
     }
 
     public boolean isMaxUsesExceeded(ItemStack itemStack, Player player) {
         if (!this.isCommandItem(itemStack)) return false;
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        int currentCount = pdc.getOrDefault(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
+        int currentCount = pdc.getOrDefault(NamespaceKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
         if (this.toCommandsItem(itemStack).maxUses(player) <= -1) {
             return false;
         }
@@ -109,7 +102,7 @@ public final class Convert {
         var commandsItem = this.toCommandsItem(cloneItem);
         var alertType = Objects.requireNonNull(this.configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
-        if (pdc.has(NamespacedKeyUtils.usageKey())
+        if (pdc.has(NamespaceKeyUtils.usageKey())
                 && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {
 
             if (alertType.equals("vanilla")) {
@@ -120,9 +113,9 @@ public final class Convert {
                 return cloneItem;
             }
 
-            int counts = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER)) + 1;
+            int counts = Objects.requireNonNull(pdc.get(NamespaceKeyUtils.usageKey(), PersistentDataType.INTEGER)) + 1;
 
-            cloneItem.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
+            cloneItem.editMeta(meta -> meta.getPersistentDataContainer().set(NamespaceKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
 
             if (counts >= commandsItem.maxUses(player)) {
                 return cloneItem.getAmount() == 1 ? new ItemStack(Material.AIR) : ItemBuilder.of(this.toItemStack(this.toCommandsItem(cloneItem), player))
@@ -140,10 +133,10 @@ public final class Convert {
             itemMeta.displayName(commandsItem.displayName(player));
             itemMeta.lore(commandsItem.lore(player));
 
-            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, commandsItem.key().value());
-            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
+            itemMeta.getPersistentDataContainer().set(NamespaceKeyUtils.idKey(), PersistentDataType.STRING, commandsItem.key().value());
+            itemMeta.getPersistentDataContainer().set(NamespaceKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
             if (!commandsItem.stackable()) {
-                itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
+                itemMeta.getPersistentDataContainer().set(NamespaceKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
             }
         });
         return itemStack;
@@ -152,9 +145,9 @@ public final class Convert {
     public CommandsItem toCommandsItem(ItemStack itemStack) {
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
         @Subst("key")
-        var keyValue = NamespacedKeyUtils.namespace();
+        var keyValue = NamespaceKeyUtils.namespace();
         @Subst("value")
-        var value = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.idKey(), PersistentDataType.STRING));
+        var value = Objects.requireNonNull(pdc.get(NamespaceKeyUtils.idKey(), PersistentDataType.STRING));
         return Objects.requireNonNull(this.commandItemRegistry.get(Key.key(keyValue, value)));
     }
 

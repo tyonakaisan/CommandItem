@@ -7,6 +7,7 @@ import org.spongepowered.configurate.objectmapping.meta.Comment;
 
 @ConfigSerializable
 @DefaultQualifier(NonNull.class)
+@SuppressWarnings("FieldMayBeFinal")
 public final class CoolTimeSettings {
 
     @Comment("""

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -43,9 +42,11 @@ public final class MessageManager {
     public MessageManager(
             final Path dataDirectory,
             final ComponentLogger logger
-    ) {
+    ) throws IOException {
         this.dataDirectory = dataDirectory;
         this.logger = logger;
+
+        this.reloadMessageFile();
     }
 
     public void reloadMessageFile() throws IOException {
@@ -68,10 +69,7 @@ public final class MessageManager {
 
             // Create default locale
             Properties properties = new Properties();
-            bundle.keySet().forEach(key -> {
-                var elements = bundle.getString(key);
-                properties.setProperty(key, elements);
-            });
+            bundle.keySet().forEach(key -> properties.setProperty(key, bundle.getString(key)));
             try (Writer outputStream = Files.newBufferedWriter(defaultLocalePath)) {
                 properties.store(outputStream, null);
             }
@@ -85,8 +83,6 @@ public final class MessageManager {
         try (Stream<Path> paths = Files.list(path)) {
             paths.filter(Files::isRegularFile)
                     .forEach(this::loadMatchFile);
-        } catch (NoSuchFileException ignored) {
-            // ignored
         } catch (IOException e) {
             this.logger.error("Failed to load locales.", e);
         }
@@ -96,17 +92,15 @@ public final class MessageManager {
 
     public void loadMatchFile(final Path path) {
         var matcher = this.pattern.matcher(path.getFileName().toString());
-        if (!matcher.matches()) {
-            return;
-        }
+        if (matcher.matches()) {
+            @Nullable Locale locale = Translator.parseLocale(matcher.group(1));
 
-        @Nullable Locale locale = Translator.parseLocale(matcher.group(1));
-        if (locale == null) {
-            this.logger.warn("Invalid locales {}", path.getFileName());
-            return;
+            if (locale == null) {
+                this.logger.warn("Invalid locales {}", path.getFileName());
+            } else {
+                this.load(locale, path);
+            }
         }
-
-        this.load(locale, path);
     }
 
     public void load(final Locale locale, final Path path) {
