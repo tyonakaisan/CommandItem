@@ -16,6 +16,7 @@ repositories {
     // TaskChain
     maven("https://repo.aikar.co/content/groups/aikar/")
 
+    // PlaceholderAPI
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
 }
 
@@ -30,9 +31,6 @@ dependencies {
     implementation("org.spongepowered", "configurate-hocon", "4.1.2")
     implementation("net.kyori", "adventure-serializer-configurate4", "4.14.0")
 
-    // Messages
-    paperLibrary("net.kyori.moonshine", "moonshine-standard", "2.0.4")
-
     // Plugins
     compileOnly("me.clip", "placeholderapi", "2.11.5")
     compileOnly("io.github.miniplaceholders", "miniplaceholders-api", "2.2.3")
@@ -43,7 +41,7 @@ dependencies {
     paperLibrary("net.objecthunter", "exp4j", "0.4.8")
 }
 
-version = "1.1.0-SNAPSHOT"
+version = "1.2.0-SNAPSHOT"
 
 paper {
     val mainPackage = "github.tyonakaisan.commanditem"
