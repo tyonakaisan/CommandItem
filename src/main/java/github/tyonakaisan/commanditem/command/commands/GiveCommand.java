@@ -100,7 +100,7 @@ public final class GiveCommand implements CommandItemCommand {
                                 "command.give.info.give",
                                 TagResolver.builder()
                                         .tag("player", Tag.selfClosingInserting(player.displayName()))
-                                        .tag("display_name", Tag.selfClosingInserting(item.displayName()))
+                                        .tag("item", Tag.selfClosingInserting(item.displayName()))
                                         .tag("count", Tag.selfClosingInserting(Component.text(count)))
                                         .build()));
 
@@ -121,12 +121,13 @@ public final class GiveCommand implements CommandItemCommand {
         if (count > maxReceive) {
             var resolver = TagResolver.builder()
                     .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
+                    .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
                     .build();
             player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.give.error.max_count", resolver));
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private void giveItem(Player player, int count, CommandsItem commandsItem) {
