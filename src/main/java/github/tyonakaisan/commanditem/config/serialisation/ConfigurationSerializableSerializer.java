@@ -36,21 +36,18 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
         this.logger = logger;
     }
 
-    // 未対応リスト
-    // Attribute付きアイテム
-    //
-    // アイテムにコマンド付けるのが本職だってのになにしてんだｺﾗｰ！
-    // おまけだからｲｲﾀﾞﾛｰ！ﾌｻﾞｹﾙﾅｰ！
+    // 汚い
     @Override
-    public ConfigurationSerializable deserialize(final Type type, final ConfigurationNode node) {
+    public ConfigurationSerializable deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
         Map<String, Object> deserializeMap = new HashMap<>();
-
         for (ConfigurationNode serializableNode : node.childrenMap().values()) {
             var key = Objects.requireNonNull(serializableNode.key()).toString();
             var rawValue = Objects.requireNonNull(serializableNode.raw());
 
             // No deserialize of displayName and lore here.
-            if (key.equals(SKULL_TEXTURE)) {
+            if (key.equals("enchants")) {
+                deserializeMap.put(key, rawValue);
+            } else if (key.equals(SKULL_TEXTURE)) {
                 Optional.ofNullable(serializableNode.getString())
                         .ifPresent(texture -> {
                             var playerProfile = Bukkit.createProfile(UUID.randomUUID(), "commandItem");
@@ -59,8 +56,6 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                             deserializeMap.put("skull-owner", playerProfile);
                         });
             } else {
-                deserializeMap.put(key, rawValue);
-
                 if (rawValue instanceof Collection) {
                     serializableNode.childrenList().forEach(child -> {
                         if (Objects.requireNonNull(child.raw()) instanceof Map<?, ?> map) {
@@ -72,10 +67,7 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                             }
                         }
                     });
-                    continue;
-                }
-
-                if (rawValue instanceof Map<?, ?> map) {
+                } else if (rawValue instanceof Map<?, ?> map) {
                     Map<String, Object> secondDeserializeMap = new HashMap<>();
                     map.forEach((mapKey, mapValue) -> {
                         if (mapValue instanceof Collection) {
@@ -84,11 +76,13 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                             } catch (SerializationException e) {
                                 this.logger.error("", e);
                             }
-                        } else {
-                            secondDeserializeMap.put((String) mapKey, mapValue);
                         }
                     });
-                    deserializeMap.put(key, secondDeserializeMap);
+                    deserializeMap.put(key, secondDeserializeMap.isEmpty()
+                            ? Objects.requireNonNull(serializableNode.get(ConfigurationSerializable.class))
+                            : secondDeserializeMap);
+                } else {
+                    deserializeMap.put(key, rawValue);
                 }
             }
         }
@@ -166,7 +160,7 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
 
                     node.node(key).set(value);
                 } catch (SerializationException e) {
-                    e.printStackTrace();
+                    this.logger.error("", e);
                 }
             });
         }
