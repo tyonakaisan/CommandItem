@@ -42,8 +42,8 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
     // アイテムにコマンド付けるのが本職だってのになにしてんだｺﾗｰ！
     // おまけだからｲｲﾀﾞﾛｰ！ﾌｻﾞｹﾙﾅｰ！
     @Override
-    public ConfigurationSerializable deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
-        Map<String, Object> deSerializeMap = new HashMap<>();
+    public ConfigurationSerializable deserialize(final Type type, final ConfigurationNode node) {
+        Map<String, Object> deserializeMap = new HashMap<>();
 
         for (ConfigurationNode serializableNode : node.childrenMap().values()) {
             var key = Objects.requireNonNull(serializableNode.key()).toString();
@@ -56,38 +56,53 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                             var playerProfile = Bukkit.createProfile(UUID.randomUUID(), "commandItem");
                             var playerProperty = new ProfileProperty("textures", texture);
                             playerProfile.setProperty(playerProperty);
-                            deSerializeMap.put("skull-owner", playerProfile);
+                            deserializeMap.put("skull-owner", playerProfile);
                         });
             } else {
-                deSerializeMap.put(key, rawValue);
+                deserializeMap.put(key, rawValue);
 
                 if (rawValue instanceof Collection) {
                     serializableNode.childrenList().forEach(child -> {
                         if (Objects.requireNonNull(child.raw()) instanceof Map<?, ?> map) {
                             Class<?> clazz = map.containsKey("v") ? ItemStack.class : ConfigurationSerializable.class;
-
                             try {
-                                deSerializeMap.put(key, Objects.requireNonNull(serializableNode.getList(clazz)));
+                                deserializeMap.put(key, Objects.requireNonNull(serializableNode.getList(clazz)));
                             } catch (SerializationException e) {
                                 this.logger.error("", e);
                             }
                         }
                     });
+                    continue;
+                }
+
+                if (rawValue instanceof Map<?, ?> map) {
+                    Map<String, Object> secondDeserializeMap = new HashMap<>();
+                    map.forEach((mapKey, mapValue) -> {
+                        if (mapValue instanceof Collection) {
+                            try {
+                                secondDeserializeMap.put((String) mapKey, Objects.requireNonNull(serializableNode.node(mapKey).getList(ConfigurationSerializable.class)));
+                            } catch (SerializationException e) {
+                                this.logger.error("", e);
+                            }
+                        } else {
+                            secondDeserializeMap.put((String) mapKey, mapValue);
+                        }
+                    });
+                    deserializeMap.put(key, secondDeserializeMap);
                 }
             }
         }
-        return Objects.requireNonNull(ConfigurationSerialization.deserializeObject(deSerializeMap));
+        return Objects.requireNonNull(ConfigurationSerialization.deserializeObject(deserializeMap));
     }
 
     @Override
-    public void serialize(final Type type, @Nullable ConfigurationSerializable obj,final ConfigurationNode node) throws SerializationException {
+    public void serialize(final Type type, @Nullable ConfigurationSerializable obj, final ConfigurationNode node) throws SerializationException {
         if (obj == null) {
             node.set(null);
         } else {
             node.node(ConfigurationSerialization.SERIALIZED_TYPE_KEY).set(ConfigurationSerialization.getAlias(obj.getClass()));
             obj.serialize().forEach((key, value) -> {
                 try {
-
                     // No serialize of display names and lore here.
                     if (key.equals(DISPLAY_NAME) || key.equals(LORE)) {
                         return;
@@ -118,7 +133,36 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                         return;
                     }
 
-                    // TODO Attribute付きアイテム…
+                    if (value instanceof Map<?, ?> map) {
+                        map.forEach((mapKey, mapValue) -> {
+                            if (mapValue instanceof Collection<?> mapCollections) {
+                                if (mapCollections.isEmpty()) {
+                                    try {
+                                        node.node(key).set(Collections.emptyList());
+                                    } catch (SerializationException e) {
+                                        this.logger.error("", e);
+                                    }
+                                    return;
+                                }
+
+                                mapCollections.forEach(collection -> {
+                                    try {
+                                        node.node(key).node(mapKey).appendListNode().set(collection);
+                                    } catch (SerializationException e) {
+                                        this.logger.error("", e);
+                                    }
+                                });
+                                return;
+                            }
+
+                            try {
+                                node.node(key).node(mapKey).set(mapValue);
+                            } catch (SerializationException e) {
+                                this.logger.error("", e);
+                            }
+                        });
+                        return;
+                    }
 
                     node.node(key).set(value);
                 } catch (SerializationException e) {
