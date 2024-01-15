@@ -145,7 +145,9 @@ public final class MessageManager {
 
         // keyがない場合
         if (!resource.keySet().contains(key)) {
-            return component.append(Component.text(key));
+            var bundle = ResourceBundle.getBundle(BUNDLE, Locale.US, UTF8ResourceBundleControl.get());
+            this.logger.warn("Message retrieved from resource bundle because '{}' does not exist in messages.properties.", key);
+            return component.append(MiniMessage.miniMessage().deserialize("<hover:show_text:'<red>This message is taken from the resource bundle'>" + bundle.getString(key), tagResolver));
         }
 
         return component.append(MiniMessage.miniMessage().deserialize(resource.getString(key), tagResolver));
