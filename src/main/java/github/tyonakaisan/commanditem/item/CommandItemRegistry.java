@@ -107,8 +107,6 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
                     .filter(path -> path.toString().endsWith(".conf"))
                     .forEach(itemFile -> {
                         final var fileName = itemFile.getFileName().toString();
-                        this.logger.info("loading {}", fileName);
-
                         final @Nullable CommandsItem item = this.registerItemFromPath(itemFile);
 
                         if (item == null) {
