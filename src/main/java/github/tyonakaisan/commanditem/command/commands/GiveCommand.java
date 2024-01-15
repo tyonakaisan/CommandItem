@@ -78,7 +78,7 @@ public final class GiveCommand implements CommandItemCommand {
                         if (commandsItem == null) {
                             sender.sendMessage(this.messageManager.translatable(
                                     MessageManager.Style.ERROR,
-                                    player,
+                                    sender,
                                     "command.give.error.unknown_item",
                                     TagResolver.builder()
                                             .tag("item", Tag.selfClosingInserting(Component.text(key.asString())))
@@ -96,7 +96,7 @@ public final class GiveCommand implements CommandItemCommand {
 
                         sender.sendMessage(this.messageManager.translatable(
                                 MessageManager.Style.INFO,
-                                player,
+                                sender,
                                 "command.give.info.give",
                                 TagResolver.builder()
                                         .tag("player", Tag.selfClosingInserting(player.displayName()))
