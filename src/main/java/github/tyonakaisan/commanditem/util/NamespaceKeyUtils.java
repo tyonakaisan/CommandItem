@@ -4,13 +4,17 @@ import org.bukkit.NamespacedKey;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
+import java.util.regex.Pattern;
+
 @DefaultQualifier(NonNull.class)
+@SuppressWarnings("unused")
 public final class NamespaceKeyUtils {
 
     private NamespaceKeyUtils() {
         throw new IllegalStateException("Utility class");
     }
 
+    private static final Pattern PATTERN = Pattern.compile("[a-z0-9_\\-.]+");
     private static final String NAMESPACE = "command_item";
 
     private static final NamespacedKey ID_KEY = new NamespacedKey(NAMESPACE, "id");
@@ -31,5 +35,13 @@ public final class NamespaceKeyUtils {
 
     public static String namespace() {
         return NAMESPACE;
+    }
+
+    public static Pattern pattern() {
+        return PATTERN;
+    }
+
+    public static boolean checkKeyStringPattern(String value) {
+        return PATTERN.matcher(value).matches();
     }
 }

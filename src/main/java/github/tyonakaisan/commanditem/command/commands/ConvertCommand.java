@@ -60,6 +60,11 @@ public final class ConvertCommand implements CommandItemCommand {
                             .map(Key::value)
                             .toList();
 
+                    if (!NamespaceKeyUtils.checkKeyStringPattern(fileName)) {
+                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.non_matching_character"));
+                        return;
+                    }
+
                     if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespaceKeyUtils.idKey())) {
                         player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.can_not_convert"));
                         return;
