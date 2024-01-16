@@ -90,7 +90,7 @@ public final class MessageManager {
         this.logger.info("Successfully {} locales loaded! {}", this.locales.keySet().size(), this.locales.keySet());
     }
 
-    public void loadMatchFile(final Path path) {
+    private void loadMatchFile(final Path path) {
         var matcher = this.pattern.matcher(path.getFileName().toString());
         if (matcher.matches()) {
             @Nullable Locale locale = Translator.parseLocale(matcher.group(1));
@@ -103,7 +103,7 @@ public final class MessageManager {
         }
     }
 
-    public void load(final Locale locale, final Path path) {
+    private void load(final Locale locale, final Path path) {
         try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
             this.locales.put(locale, new PropertyResourceBundle(reader));
         } catch (Exception e) {
