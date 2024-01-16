@@ -13,7 +13,7 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
@@ -34,19 +34,19 @@ public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
     @Override
     public ItemStack deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
-        Map<String, Object> objdeSerializeMap = new HashMap<>();
+        LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
 
-        objdeSerializeMap.put(DATA_VERSION, node.node(DATA_VERSION).getInt(Bukkit.getUnsafe().getDataVersion()));
-        objdeSerializeMap.put(MATERIAL_TYPE, Objects.requireNonNull(node.node(MATERIAL_TYPE).getString()));
-        objdeSerializeMap.put(AMOUNT, node.node(AMOUNT).getInt(1));
+        deserializeMap.put(DATA_VERSION, node.node(DATA_VERSION).getInt(Bukkit.getUnsafe().getDataVersion()));
+        deserializeMap.put(MATERIAL_TYPE, Objects.requireNonNull(node.node(MATERIAL_TYPE).getString()));
+        deserializeMap.put(AMOUNT, node.node(AMOUNT).getInt(1));
 
         var metaNode = node.node(ITEM_META);
 
         if (!metaNode.isNull()) {
-            objdeSerializeMap.put("meta", Objects.requireNonNull(metaNode.get(ConfigurationSerializable.class)));
+            deserializeMap.put("meta", Objects.requireNonNull(metaNode.get(ConfigurationSerializable.class)));
         }
 
-        return ItemStack.deserialize(objdeSerializeMap);
+        return ItemStack.deserialize(deserializeMap);
     }
 
     @Override

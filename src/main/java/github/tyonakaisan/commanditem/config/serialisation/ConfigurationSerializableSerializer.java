@@ -26,9 +26,6 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
 
     private final ComponentLogger logger;
 
-    private static final String DISPLAY_NAME = "display-name";
-    private static final String LORE = "lore";
-    private static final String ENCHANTS = "enchants";
     private static final String SKULL_TEXTURE = "skull-texture";
 
     @Inject
@@ -41,15 +38,12 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
     // 汚い
     @Override
     public ConfigurationSerializable deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
-        Map<String, Object> deserializeMap = new HashMap<>();
-        for (ConfigurationNode serializableNode : node.childrenMap().values()) {
-            var key = Objects.requireNonNull(serializableNode.key()).toString();
-            var rawValue = Objects.requireNonNull(serializableNode.raw());
+        LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
+        for (Map.Entry<Object, ? extends ConfigurationNode> entry : node.childrenMap().entrySet()) {
+            var name = entry.getKey().toString();
+            var serializableNode = entry.getValue();
 
-            // No deserialize of displayName and lore here.
-            if (key.equals(ENCHANTS)) {
-                deserializeMap.put(key, rawValue);
-            } else if (key.equals(SKULL_TEXTURE)) {
+            if (name.equals(SKULL_TEXTURE)) {
                 Optional.ofNullable(serializableNode.getString())
                         .ifPresent(texture -> {
                             var playerProfile = Bukkit.createProfile(UUID.randomUUID(), "commandItem");
@@ -57,35 +51,52 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                             playerProfile.setProperty(playerProperty);
                             deserializeMap.put("skull-owner", playerProfile);
                         });
-            } else {
-                if (rawValue instanceof Collection) {
-                    serializableNode.childrenList().forEach(child -> {
-                        if (Objects.requireNonNull(child.raw()) instanceof Map<?, ?> map) {
-                            Class<?> clazz = map.containsKey("v") ? ItemStack.class : ConfigurationSerializable.class;
-                            try {
-                                deserializeMap.put(key, Objects.requireNonNull(serializableNode.getList(clazz)));
-                            } catch (SerializationException e) {
-                                this.logger.error("", e);
-                            }
-                        }
-                    });
-                } else if (rawValue instanceof Map<?, ?> map) {
-                    Map<String, Object> secondDeserializeMap = new HashMap<>();
-                    map.forEach((mapKey, mapValue) -> {
-                        if (mapValue instanceof Collection) {
-                            try {
-                                secondDeserializeMap.put((String) mapKey, Objects.requireNonNull(serializableNode.node(mapKey).getList(ConfigurationSerializable.class)));
-                            } catch (SerializationException e) {
-                                this.logger.error("", e);
-                            }
-                        }
-                    });
-                    deserializeMap.put(key, secondDeserializeMap.isEmpty()
-                            ? Objects.requireNonNull(serializableNode.get(ConfigurationSerializable.class))
-                            : secondDeserializeMap);
+            } else if (serializableNode.isMap()) {
+                var serializableMap = serializableNode.childrenMap();
+
+                if (serializableMap.containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
+                    Optional.ofNullable(serializableNode.get(ConfigurationSerializable.class))
+                                    .ifPresent(object -> deserializeMap.put(name, object));
                 } else {
-                    deserializeMap.put(key, rawValue);
+                    LinkedHashMap<String, Object> mapInMap = new LinkedHashMap<>();
+
+                    for (Map.Entry<Object, ? extends ConfigurationNode> secondEntry : serializableMap.entrySet()) {
+                        var secondSerializableNode = secondEntry.getValue();
+                        var secondEntryKey = secondEntry.getKey().toString();
+
+                        if (secondSerializableNode.isMap()) {
+                            Optional.ofNullable(secondSerializableNode.get(ConfigurationSerializable.class))
+                                            .ifPresent(object -> mapInMap.put(secondEntryKey, object));
+                        } else if (secondSerializableNode.isList()) {
+                            var objects = new ArrayList<>();
+
+                            for (ConfigurationNode arrayElement : secondSerializableNode.childrenList()) {
+                                objects.add(arrayElement.get(ConfigurationSerializable.class));
+                            }
+
+                            mapInMap.put(secondEntryKey, objects);
+                        } else {
+                            mapInMap.put(secondEntryKey, Objects.requireNonNull(secondSerializableNode.raw()));
+                        }
+                    }
+                    deserializeMap.put(name, mapInMap);
                 }
+            } else if (serializableNode.isList()) {
+                var objectsList = new ArrayList<>();
+
+                for (ConfigurationNode arrayNode : serializableNode.childrenList()) {
+                    if (arrayNode.isMap() && arrayNode.childrenMap().containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
+                        objectsList.add(arrayNode.get(ConfigurationSerializable.class));
+                    } else if (arrayNode.isMap() && arrayNode.childrenMap().containsKey("v")) {
+                        objectsList.add(arrayNode.get(ItemStack.class));
+                    } else {
+                        objectsList.add(arrayNode.raw());
+                    }
+                }
+
+                deserializeMap.put(name, objectsList);
+            } else {
+                deserializeMap.put(name, Objects.requireNonNull(serializableNode.raw()));
             }
         }
         return Objects.requireNonNull(ConfigurationSerialization.deserializeObject(deserializeMap));
@@ -97,14 +108,9 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
             node.set(null);
         } else {
             node.node(ConfigurationSerialization.SERIALIZED_TYPE_KEY).set(ConfigurationSerialization.getAlias(obj.getClass()));
-            obj.serialize().forEach((key, value) -> {
+            obj.serialize().forEach((key, object) -> {
                 try {
-                    // No serialize of display names and lore here.
-                    if (key.equals(DISPLAY_NAME) || key.equals(LORE)) {
-                        return;
-                    }
-
-                    if (key.equals("skull-owner") && value instanceof PlayerProfile playerProfile) {
+                    if (key.equals("skull-owner") && object instanceof PlayerProfile playerProfile) {
                         String url = Objects.requireNonNull(playerProfile.getTextures().getSkin()).toString();
                         byte[] encodeData = Base64.encodeBase64(String.format("{textures:{SKIN:{url:\"%s\"}}}", url).getBytes());
                         String encodeString = new String(encodeData, StandardCharsets.UTF_8);
@@ -112,55 +118,52 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                         return;
                     }
 
-                    if (value instanceof Collection<?> collections) {
+                    if (object instanceof Collection<?> collections) {
                         // 空のリストがあるとスキップされてロードした時に読み込めなくなる対策
                         if (collections.isEmpty()) {
                             node.node(key).set(Collections.emptyList());
-                            return;
-                        }
-
-                        collections.forEach(collection -> {
-                            try {
-                                node.node(key).appendListNode().set(collection);
-                            } catch (SerializationException e) {
-                                this.logger.error("", e);
-                            }
-                        });
-                        return;
-                    }
-
-                    if (value instanceof Map<?, ?> map) {
-                        map.forEach((mapKey, mapValue) -> {
-                            if (mapValue instanceof Collection<?> mapCollections) {
-                                if (mapCollections.isEmpty()) {
-                                    try {
-                                        node.node(key).set(Collections.emptyList());
-                                    } catch (SerializationException e) {
-                                        this.logger.error("", e);
-                                    }
-                                    return;
+                        } else {
+                            collections.forEach(collection -> {
+                                try {
+                                    node.node(key).appendListNode().set(collection);
+                                } catch (SerializationException e) {
+                                    this.logger.error("", e);
                                 }
+                            });
+                        }
+                        return;
+                    }
 
-                                mapCollections.forEach(collection -> {
+                    if (object instanceof Map<?, ?> map) {
+                        map.forEach((mapKey, mapValue) -> {
+                            if (mapValue instanceof Collection<?> collections1) {
+                                if (!collections1.isEmpty()) {
+                                    collections1.forEach(collection1 -> {
+                                        try {
+                                            node.node(key).node(mapKey).appendListNode().set(collection1);
+                                        } catch (SerializationException e) {
+                                            this.logger.error("", e);
+                                        }
+                                    });
+                                } else {
                                     try {
-                                        node.node(key).node(mapKey).appendListNode().set(collection);
+                                        node.node(key).node(mapKey).set(Collections.emptyList());
                                     } catch (SerializationException e) {
                                         this.logger.error("", e);
                                     }
-                                });
-                                return;
-                            }
-
-                            try {
-                                node.node(key).node(mapKey).set(mapValue);
-                            } catch (SerializationException e) {
-                                this.logger.error("", e);
+                                }
+                            } else {
+                                try {
+                                    node.node(key).node(mapKey).set(mapValue);
+                                } catch (SerializationException e) {
+                                    this.logger.error("", e);
+                                }
                             }
                         });
                         return;
                     }
 
-                    node.node(key).set(value);
+                    node.node(key).set(object);
                 } catch (SerializationException e) {
                     this.logger.error("", e);
                 }
