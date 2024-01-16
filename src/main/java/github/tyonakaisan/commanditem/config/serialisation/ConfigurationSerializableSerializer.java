@@ -25,8 +25,10 @@ import java.util.*;
 public class ConfigurationSerializableSerializer implements TypeSerializer<ConfigurationSerializable> {
 
     private final ComponentLogger logger;
+
     private static final String DISPLAY_NAME = "display-name";
     private static final String LORE = "lore";
+    private static final String ENCHANTS = "enchants";
     private static final String SKULL_TEXTURE = "skull-texture";
 
     @Inject
@@ -45,7 +47,7 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
             var rawValue = Objects.requireNonNull(serializableNode.raw());
 
             // No deserialize of displayName and lore here.
-            if (key.equals("enchants")) {
+            if (key.equals(ENCHANTS)) {
                 deserializeMap.put(key, rawValue);
             } else if (key.equals(SKULL_TEXTURE)) {
                 Optional.ofNullable(serializableNode.getString())
