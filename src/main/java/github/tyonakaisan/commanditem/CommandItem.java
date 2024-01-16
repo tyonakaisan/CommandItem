@@ -9,6 +9,7 @@ import github.tyonakaisan.commanditem.command.commands.ReloadCommand;
 import github.tyonakaisan.commanditem.listener.ItemUseListener;
 import github.tyonakaisan.commanditem.listener.JoinListener;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -59,5 +60,13 @@ public final class CommandItem extends JavaPlugin {
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+    }
+
+    public static boolean papiLoaded() {
+        return Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
+    }
+
+    public static boolean miniPlaceholdersLoaded() {
+        return Bukkit.getPluginManager().isPluginEnabled("MiniPlaceholders");
     }
 }

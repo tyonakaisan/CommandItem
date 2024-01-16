@@ -1,5 +1,6 @@
 package github.tyonakaisan.commanditem.util;
 
+import github.tyonakaisan.commanditem.CommandItem;
 import io.github.miniplaceholders.api.MiniPlaceholders;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
@@ -45,17 +46,22 @@ public final class PlaceholderUtils {
     }
 
     private static String papiParserString(Player player, String string) {
-        return PlaceholderAPI.setPlaceholders(player, string);
+        return CommandItem.papiLoaded() ? PlaceholderAPI.setPlaceholders(player, string) : string;
     }
 
-    private static MiniMessage miniMessage(Player player) {
+    private static MiniMessage miniMessage(final Player player) {
+        var tagResolver = TagResolver.builder();
+
+        if (CommandItem.miniPlaceholdersLoaded()) {
+            tagResolver.resolver(MiniPlaceholders.getGlobalPlaceholders());
+            tagResolver.resolver(MiniPlaceholders.getAudiencePlaceholders(player));
+        }
+
+        tagResolver.tag("player", Tag.inserting(player.displayName()));
+        tagResolver.resolver(TagResolver.standard());
+
         return MiniMessage.builder()
-                .tags(TagResolver.builder()
-                        .tag("player", Tag.inserting(player.displayName()))
-                        .resolver(MiniPlaceholders.getGlobalPlaceholders())
-                        .resolver(MiniPlaceholders.getAudiencePlaceholders(player))
-                        .resolver(TagResolver.standard())
-                        .build())
+                .tags(tagResolver.build())
                 .build();
     }
 }
