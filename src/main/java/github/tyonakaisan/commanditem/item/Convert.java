@@ -47,7 +47,7 @@ public final class Convert {
     }
 
     public boolean isCommandItem(@Nullable ItemStack itemStack) {
-        if (itemStack == null) return false;
+        if (itemStack == null || itemStack.getItemMeta() == null) return false;
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
         return pdc.has(NamespaceKeyUtils.idKey());
     }
