@@ -40,10 +40,10 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
     public ConfigurationSerializable deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
         LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
         for (Map.Entry<Object, ? extends ConfigurationNode> entry : node.childrenMap().entrySet()) {
-            var name = entry.getKey().toString();
+            var key = entry.getKey().toString();
             var serializableNode = entry.getValue();
 
-            if (name.equals(SKULL_TEXTURE)) {
+            if (key.equals(SKULL_TEXTURE)) {
                 Optional.ofNullable(serializableNode.getString())
                         .ifPresent(texture -> {
                             var playerProfile = Bukkit.createProfile(UUID.randomUUID(), "commandItem");
@@ -56,47 +56,49 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
 
                 if (serializableMap.containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
                     Optional.ofNullable(serializableNode.get(ConfigurationSerializable.class))
-                                    .ifPresent(object -> deserializeMap.put(name, object));
+                                    .ifPresent(object -> deserializeMap.put(key, object));
                 } else {
                     LinkedHashMap<String, Object> mapInMap = new LinkedHashMap<>();
 
                     for (Map.Entry<Object, ? extends ConfigurationNode> secondEntry : serializableMap.entrySet()) {
+                        var secondKey = secondEntry.getKey().toString();
                         var secondSerializableNode = secondEntry.getValue();
-                        var secondEntryKey = secondEntry.getKey().toString();
 
                         if (secondSerializableNode.isMap()) {
                             Optional.ofNullable(secondSerializableNode.get(ConfigurationSerializable.class))
-                                            .ifPresent(object -> mapInMap.put(secondEntryKey, object));
+                                            .ifPresent(object -> mapInMap.put(secondKey, object));
                         } else if (secondSerializableNode.isList()) {
                             var objects = new ArrayList<>();
 
-                            for (ConfigurationNode arrayElement : secondSerializableNode.childrenList()) {
-                                objects.add(arrayElement.get(ConfigurationSerializable.class));
+                            for (ConfigurationNode listNode : secondSerializableNode.childrenList()) {
+                                objects.add(listNode.get(ConfigurationSerializable.class));
                             }
 
-                            mapInMap.put(secondEntryKey, objects);
+                            mapInMap.put(secondKey, objects);
                         } else {
-                            mapInMap.put(secondEntryKey, Objects.requireNonNull(secondSerializableNode.raw()));
+                            Optional.ofNullable(secondSerializableNode.raw())
+                                            .ifPresent(object -> mapInMap.put(secondKey, object));
                         }
                     }
-                    deserializeMap.put(name, mapInMap);
+                    deserializeMap.put(key, mapInMap);
                 }
             } else if (serializableNode.isList()) {
-                var objectsList = new ArrayList<>();
+                var objects = new ArrayList<>();
 
-                for (ConfigurationNode arrayNode : serializableNode.childrenList()) {
-                    if (arrayNode.isMap() && arrayNode.childrenMap().containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
-                        objectsList.add(arrayNode.get(ConfigurationSerializable.class));
-                    } else if (arrayNode.isMap() && arrayNode.childrenMap().containsKey("v")) {
-                        objectsList.add(arrayNode.get(ItemStack.class));
+                for (ConfigurationNode listNode : serializableNode.childrenList()) {
+                    if (listNode.isMap() && listNode.childrenMap().containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
+                        objects.add(listNode.get(ConfigurationSerializable.class));
+                    } else if (listNode.isMap() && listNode.childrenMap().containsKey("v")) {
+                        objects.add(listNode.get(ItemStack.class));
                     } else {
-                        objectsList.add(arrayNode.raw());
+                        objects.add(listNode.raw());
                     }
                 }
 
-                deserializeMap.put(name, objectsList);
+                deserializeMap.put(key, objects);
             } else {
-                deserializeMap.put(name, Objects.requireNonNull(serializableNode.raw()));
+                Optional.ofNullable(serializableNode.raw())
+                                .ifPresent(objects -> deserializeMap.put(key, objects));
             }
         }
         return Objects.requireNonNull(ConfigurationSerialization.deserializeObject(deserializeMap));
