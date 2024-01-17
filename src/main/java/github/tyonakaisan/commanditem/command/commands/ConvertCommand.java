@@ -18,7 +18,6 @@ import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
-import java.io.IOException;
 import java.util.List;
 
 @DefaultQualifier(NonNull.class)
@@ -75,24 +74,20 @@ public final class ConvertCommand implements CommandItemCommand {
                         return;
                     }
 
-                    try {
-                        this.commandItemRegistry.createItemConfig(fileName, item);
-                        this.commandItemRegistry.reloadItemConfig();
-                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.SUCCESS,
-                                player,
-                                "command.convert.success.convert",
-                                TagResolver.builder()
-                                        .tag("file", Tag.selfClosingInserting(Component.text(fileName + ".conf")))
-                                        .build()));
+                    this.commandItemRegistry.createItemConfig(fileName, item);
+                    this.commandItemRegistry.reloadItemConfig();
+                    player.sendMessage(this.messageManager.translatable(MessageManager.Style.SUCCESS,
+                            player,
+                            "command.convert.success.convert",
+                            TagResolver.builder()
+                                    .tag("file", Tag.selfClosingInserting(Component.text(fileName + ".conf")))
+                                    .build()));
 
-                        player.playSound(Sound.sound()
-                                .type(Key.key("minecraft:block.anvil.use"))
-                                .volume(0.25f)
-                                .pitch(1.25f)
-                                .build());
-                    } catch (IOException e) {
-                        this.logger.error("Failed to convert item.", e);
-                    }
+                    player.playSound(Sound.sound()
+                            .type(Key.key("minecraft:block.anvil.use"))
+                            .volume(0.25f)
+                            .pitch(1.25f)
+                            .build());
                 })
                 .build();
 

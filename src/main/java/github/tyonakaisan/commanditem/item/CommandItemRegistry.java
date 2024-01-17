@@ -53,7 +53,7 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
             final Path dataDirectory,
             final ConfigFactory configFactory,
             final ComponentLogger logger
-    ) throws IOException {
+    ) {
         this.dataDirectory = dataDirectory;
         this.configFactory = configFactory;
         this.logger = logger;
@@ -61,17 +61,22 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
         this.reloadItemConfig();
     }
 
-    public void reloadItemConfig() throws IOException {
+    public void reloadItemConfig() {
         this.registeredItemMap.clear();
         this.logger.info("Reloading items...");
         this.loadItemConfig();
     }
 
-    public void createItemConfig(final String fileName, final ItemStack itemStack) throws IOException {
+    public void createItemConfig(final String fileName, final ItemStack itemStack) {
         var itemFilePath = this.dataDirectory.resolve("items");
 
         if (!Files.exists(itemFilePath)) {
-            Files.createDirectories(itemFilePath);
+            try {
+                Files.createDirectories(itemFilePath);
+            } catch (final IOException e) {
+                this.logger.error(String.format("Failed to create parent directories for '%s'", itemFilePath), e);
+                return;
+            }
         }
 
         final var file = itemFilePath.resolve(fileName + ".conf");
@@ -95,11 +100,16 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
 
     }
 
-    public void loadItemConfig() throws IOException {
+    public void loadItemConfig() {
         var itemFilePath = this.dataDirectory.resolve("items");
 
         if (!Files.exists(itemFilePath)) {
-            Files.createDirectories(itemFilePath);
+            try {
+                Files.createDirectories(itemFilePath);
+            } catch (final IOException e) {
+                this.logger.error(String.format("Failed to create parent directories for '%s'", itemFilePath), e);
+                return;
+            }
         }
 
         try (Stream<Path> paths = Files.walk(itemFilePath)) {

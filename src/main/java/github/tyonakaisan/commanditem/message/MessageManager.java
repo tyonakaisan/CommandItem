@@ -42,17 +42,21 @@ public final class MessageManager {
     public MessageManager(
             final Path dataDirectory,
             final ComponentLogger logger
-    ) throws IOException {
+    ) {
         this.dataDirectory = dataDirectory;
         this.logger = logger;
 
         this.reloadMessageFile();
     }
 
-    public void reloadMessageFile() throws IOException {
+    public void reloadMessageFile() {
         this.locales.clear();
         this.logger.info("Reloading locales...");
-        this.loadMessageFile();
+        try {
+            this.loadMessageFile();
+        } catch (IOException e) {
+            this.logger.error("Failed to reload locales.", e);
+        }
     }
 
     public void loadMessageFile() throws IOException {

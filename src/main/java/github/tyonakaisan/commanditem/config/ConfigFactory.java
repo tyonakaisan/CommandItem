@@ -10,6 +10,7 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -25,13 +26,15 @@ import java.nio.file.Path;
 @DefaultQualifier(NonNull.class)
 public class ConfigFactory {
 
+    private static final String PRIMARY_CONFIG_FILE_NAME = "config.conf";
+
     private final Path dataDirectory;
     private final ComponentLogger logger;
 
     private final ItemStackSerializer itemStackSerializer;
     private final ConfigurationSerializableSerializer configurationSerializableSerializer;
 
-    private @Nullable PrimaryConfig primaryConfig = null;
+    private @MonotonicNonNull PrimaryConfig primaryConfig;
 
     @Inject
     public ConfigFactory(
@@ -48,22 +51,20 @@ public class ConfigFactory {
         this.reloadPrimaryConfig();
     }
 
-    public @Nullable PrimaryConfig reloadPrimaryConfig() {
+    public PrimaryConfig reloadPrimaryConfig() {
         this.logger.info("Reloading configuration...");
-        try {
-            this.primaryConfig = this.load(PrimaryConfig.class, "config.conf");
-        } catch (final IOException exception) {
-            exception.printStackTrace();
+        final @Nullable PrimaryConfig load = this.load(PrimaryConfig.class, PRIMARY_CONFIG_FILE_NAME);
+        if (load != null) {
+            this.primaryConfig = load;
+        } else {
+            this.logger.error("Failed to reload primary config, see above for further details");
         }
 
         return this.primaryConfig;
     }
 
-    public @Nullable PrimaryConfig primaryConfig() {
-        if (this.primaryConfig == null) {
-            return this.reloadPrimaryConfig();
-        }
-        return this.primaryConfig;
+    public PrimaryConfig primaryConfig() {
+        return this.primaryConfig != null ? this.primaryConfig : this.reloadPrimaryConfig();
     }
 
     public ConfigurationLoader<?> configurationLoader(final Path file) {
@@ -75,13 +76,13 @@ public class ConfigFactory {
                                     .scalarSerializer(MiniMessage.miniMessage())
                                     .outputStringComponents(true)
                                     .build();
-                    final var kyoriSerializer =
+                    final var componentSerializer =
                             ConfigurateComponentSerializer.configurate();
 
                     return opts.shouldCopyDefaults(true).serializers(serializerBuilder ->
                             serializerBuilder
                                     .registerAll(miniMessageSerializer.serializers())
-                                    .registerAll(kyoriSerializer.serializers())
+                                    .registerAll(componentSerializer.serializers())
                                     .register(ItemStack.class, this.itemStackSerializer)
                                     .register(ConfigurationSerializable.class, this.configurationSerializableSerializer)
                     );
@@ -90,12 +91,17 @@ public class ConfigFactory {
                 .build();
     }
 
-    public <T> @Nullable T load(final Class<T> clazz, final String fileName) throws IOException {
-        if (!Files.exists(this.dataDirectory)) {
-            Files.createDirectories(this.dataDirectory);
-        }
-
+    public <T> @Nullable T load(final Class<T> clazz, final String fileName) {
         final Path file = this.dataDirectory.resolve(fileName);
+
+        if (!Files.exists(this.dataDirectory)) {
+            try {
+                Files.createDirectories(this.dataDirectory);
+            } catch (final IOException e) {
+                this.logger.error(String.format("Failed to create parent directories for '%s'", file), e);
+                return null;
+            }
+        }
 
         final var loader = this.configurationLoader(file);
 

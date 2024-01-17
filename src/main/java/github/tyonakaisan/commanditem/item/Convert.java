@@ -100,7 +100,7 @@ public final class Convert {
         var cloneItem = itemStack.clone();
         var pdc = cloneItem.getItemMeta().getPersistentDataContainer();
         var commandsItem = this.toCommandsItem(cloneItem);
-        var alertType = Objects.requireNonNull(this.configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
+        var alertType = this.configFactory.primaryConfig().coolTime().coolTimeAlertType().toLowerCase();
 
         if (pdc.has(NamespaceKeyUtils.usageKey())
                 && (commandsItem.byPlayerCommands().containsKey(itemAction) || commandsItem.byConsoleCommands().containsKey(itemAction))) {

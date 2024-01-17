@@ -56,11 +56,9 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item) && this.convert.checkInternalCoolTime(player.getUniqueId())) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.fromBukkitAction(event.getAction());
-            var alertType = Objects.requireNonNull(configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
             // 別枠
-            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
-                    && alertType.equals("message")) {
+            if (this.isCoolTime(player, commandsItem)) {
                 this.eventCanceled(event, player, commandsItem.key());
                 return;
             }
@@ -81,11 +79,8 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item)) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.CONSUME;
-            var alertType = Objects.requireNonNull(configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
-            // 別枠
-            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
-                    && alertType.equals("message")) {
+            if (this.isCoolTime(player, commandsItem)) {
                 this.eventCanceled(event, player, commandsItem.key());
                 return;
             }
@@ -102,10 +97,8 @@ public final class ItemUseListener implements Listener {
         if (this.convert.isCommandItem(item)) {
             var commandsItem = this.convert.toCommandsItem(item);
             var action = ActionUtils.ItemAction.PLACE;
-            var alertType = Objects.requireNonNull(configFactory.primaryConfig()).coolTime().coolTimeAlertType().toLowerCase();
 
-            if (this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key())
-                    && alertType.equals("message")) {
+            if (this.isCoolTime(player, commandsItem)) {
                 this.eventCanceled(event, player, commandsItem.key());
                 return;
             }
@@ -132,5 +125,10 @@ public final class ItemUseListener implements Listener {
                 .build();
         player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "cooltime.error.during_cool_time", resolver));
         cancellableEvent.setCancelled(true);
+    }
+
+    private boolean isCoolTime(Player player, CommandsItem commandsItem) {
+        var alertType = this.configFactory.primaryConfig().coolTime().coolTimeAlertType().toLowerCase();
+        return this.itemCoolTimeManager.hasItemCoolTime(player.getUniqueId(), commandsItem.key()) && alertType.equals("message");
     }
 }

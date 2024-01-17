@@ -11,8 +11,6 @@ import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
-import java.io.IOException;
-
 @DefaultQualifier(NonNull.class)
 public final class ReloadCommand implements CommandItemCommand {
 
@@ -42,12 +40,9 @@ public final class ReloadCommand implements CommandItemCommand {
                 .senderType(CommandSender.class)
                 .handler(handler -> {
                     this.configFactory.reloadPrimaryConfig();
-                    try {
-                        this.commandItemRegistry.reloadItemConfig();
-                        this.messageManager.reloadMessageFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    this.commandItemRegistry.reloadItemConfig();
+                    this.messageManager.reloadMessageFile();
+
                     final var sender = (Player) handler.getSender();
                     sender.sendMessage(this.messageManager.translatable(MessageManager.Style.SUCCESS, sender, "command.reload.success.reload"));
                 })

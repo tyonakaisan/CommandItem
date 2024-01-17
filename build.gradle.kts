@@ -41,7 +41,7 @@ dependencies {
     paperLibrary("net.objecthunter", "exp4j", "0.4.8")
 }
 
-version = "1.2.0-SNAPSHOT"
+version = "1.3.1-SNAPSHOT"
 
 paper {
     val mainPackage = "github.tyonakaisan.commanditem"
