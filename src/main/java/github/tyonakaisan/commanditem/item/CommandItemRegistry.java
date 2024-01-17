@@ -110,12 +110,12 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
                         final @Nullable CommandsItem item = this.registerItemFromPath(itemFile);
 
                         if (item == null) {
-                            this.logger.warn("Failed to load file {}", fileName);
+                            this.logger.warn("Failed to load item {}", fileName);
                         }
                     });
                 this.logger.info("Successfully {} items loaded!", this.registeredItemMap.keySet().size());
         } catch (IOException e) {
-            this.logger.error("Failed to load config.", e);
+            this.logger.error("Failed to load item.", e);
         }
     }
 
@@ -140,7 +140,7 @@ public final class CommandItemRegistry implements Registry<Key, CommandsItem> {
             loader.save(loaded);
             return mapper.load(loaded);
         } catch (final ConfigurateException exception) {
-            this.logger.warn("Failed to load file '{}'", itemFile, exception);
+            this.logger.warn("Failed to load item '{}'", itemFile.getFileName(), exception);
         }
 
         return null;
