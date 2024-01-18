@@ -144,11 +144,11 @@ public final class Convert {
 
     public CommandsItem toCommandsItem(ItemStack itemStack) {
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        @Subst("key")
-        var keyValue = NamespaceKeyUtils.namespace();
+        @Subst("namespace")
+        var namespace = NamespaceKeyUtils.namespace();
         @Subst("value")
         var value = Objects.requireNonNull(pdc.get(NamespaceKeyUtils.idKey(), PersistentDataType.STRING));
-        return Objects.requireNonNull(this.commandItemRegistry.get(Key.key(keyValue, value)));
+        return Objects.requireNonNull(this.commandItemRegistry.get(Key.key(namespace, value)));
     }
 
     public void executeCommand(CommandsItem commandsItem, Player player, ActionUtils.ItemAction itemAction) {
