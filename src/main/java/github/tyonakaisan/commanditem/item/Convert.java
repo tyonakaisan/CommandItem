@@ -49,7 +49,14 @@ public final class Convert {
     public boolean isCommandItem(@Nullable ItemStack itemStack) {
         if (itemStack == null || itemStack.getItemMeta() == null) return false;
         var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        return pdc.has(NamespaceKeyUtils.idKey());
+
+        if (!pdc.has(NamespaceKeyUtils.idKey())) return false;
+        @Subst("namespace")
+        var namespace = NamespaceKeyUtils.namespace();
+        @Subst("value")
+        var value = Objects.requireNonNull(pdc.get(NamespaceKeyUtils.idKey(), PersistentDataType.STRING));
+
+        return (this.commandItemRegistry.keySet().contains(Key.key(namespace, value)));
     }
 
     public boolean isMaxUsesExceeded(ItemStack itemStack, Player player) {
