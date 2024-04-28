@@ -1,9 +1,5 @@
 package github.tyonakaisan.commanditem.command.commands;
 
-import cloud.commandframework.CommandManager;
-import cloud.commandframework.arguments.standard.IntegerArgument;
-import cloud.commandframework.bukkit.arguments.selector.MultiplePlayerSelector;
-import cloud.commandframework.bukkit.parsers.selector.MultiplePlayerSelectorArgument;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
@@ -21,6 +17,12 @@ import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.bukkit.data.Selector;
+import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
+import org.incendo.cloud.parser.standard.IntegerParser;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 import org.intellij.lang.annotations.Subst;
 
 import java.util.Set;
@@ -53,26 +55,24 @@ public final class GiveCommand implements CommandItemCommand {
                 .literal("give")
                 .permission("commanditem.command.give")
                 .senderType(CommandSender.class)
-                .argument(MultiplePlayerSelectorArgument.of("player"))
-                .argument(this.commandManager.argumentBuilder(String.class, "key")
-                        .withSuggestionsProvider(
-                                ((context, string) -> {
-                                    final Set<Key> allArgs = this.commandItemRegistry.keySet();
-                                    return allArgs.stream()
-                                            .map(Key::asString)
-                                            .toList();
-                                })
-                        )
-                        .build())
-                .argument(IntegerArgument.optional("count"))
+                .required("player", MultiplePlayerSelectorParser.multiplePlayerSelectorParser())
+                .required("key",
+                        StringParser.greedyStringParser(),
+                        SuggestionProvider.blockingStrings((context, input) -> {
+                            final Set<Key> allArgs = this.commandItemRegistry.keySet();
+                            return allArgs.stream()
+                                    .map(Key::asString)
+                                    .toList();
+                }))
+                .optional("count", IntegerParser.integerParser())
                 .handler(handler -> {
-                    final var sender = handler.getSender();
-                    final MultiplePlayerSelector players = handler.get("player");
+                    final var sender = handler.sender();
+                    final Selector<Player> players = handler.get("player");
                     final @Subst("value") String keyValue = handler.get("key");
                     final var key = Key.key(keyValue);
-                    final var count = (int) handler.getOptional("count").orElse(1);
+                    final var count = (int) handler.optional("count").orElse(1);
 
-                    players.getPlayers().forEach(player -> {
+                    players.values().forEach(player -> {
                         @Nullable CommandsItem commandsItem = this.commandItemRegistry.get(key);
 
                         if (commandsItem == null) {

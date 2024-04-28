@@ -1,6 +1,5 @@
 package github.tyonakaisan.commanditem.command.commands;
 
-import cloud.commandframework.CommandManager;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
@@ -9,6 +8,7 @@ import github.tyonakaisan.commanditem.message.Messages;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.incendo.cloud.CommandManager;
 
 @DefaultQualifier(NonNull.class)
 public final class ReloadCommand implements CommandItemCommand {
@@ -42,7 +42,7 @@ public final class ReloadCommand implements CommandItemCommand {
                     this.commandItemRegistry.reloadItemConfig();
                     this.messages.reloadMessage();
 
-                    final var sender = handler.getSender();
+                    final var sender = handler.sender();
                     sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS, sender, "command.reload.success.reload"));
                 })
                 .build();

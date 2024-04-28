@@ -1,6 +1,5 @@
 package github.tyonakaisan.commanditem.command.commands;
 
-import cloud.commandframework.CommandManager;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
@@ -17,8 +16,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
-
-import java.util.List;
+import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.parser.standard.StringParser;
 
 @DefaultQualifier(NonNull.class)
 public final class ConvertCommand implements CommandItemCommand {
@@ -48,12 +47,10 @@ public final class ConvertCommand implements CommandItemCommand {
                 .literal("convert")
                 .permission("commanditem.command.convert")
                 .senderType(CommandSender.class)
-                .argument(this.commandManager.argumentBuilder(String.class, "file_name")
-                        .withSuggestionsProvider((context, string) -> List.of("<file_name>"))
-                        .build())
+                .required("id", StringParser.stringParser())
                 .handler(handler -> {
-                    if (handler.getSender() instanceof Player sender) {
-                        final String fileName = handler.get("file_name");
+                    if (handler.sender() instanceof Player sender) {
+                        final String fileName = handler.get("id");
                         final var item = sender.getInventory().getItemInMainHand();
                         final var allKey = this.commandItemRegistry.keySet().stream()
                                 .map(Key::value)

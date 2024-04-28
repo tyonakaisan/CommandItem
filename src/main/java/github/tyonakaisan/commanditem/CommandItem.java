@@ -2,12 +2,9 @@ package github.tyonakaisan.commanditem;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.command.commands.ConvertCommand;
-import github.tyonakaisan.commanditem.command.commands.GiveCommand;
-import github.tyonakaisan.commanditem.command.commands.ReloadCommand;
-import github.tyonakaisan.commanditem.listener.ItemUseListener;
-import github.tyonakaisan.commanditem.listener.JoinListener;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
@@ -21,15 +18,6 @@ import java.util.Set;
 @DefaultQualifier(NonNull.class)
 public final class CommandItem extends JavaPlugin {
 
-    private static final Set<Class<? extends Listener>> LISTENER_CLASSES = Set.of(
-            ItemUseListener.class,
-            JoinListener.class
-    );
-    private static final Set<Class<? extends CommandItemCommand>> COMMAND_CLASSES = Set.of(
-            ReloadCommand.class,
-            GiveCommand.class,
-            ConvertCommand.class
-    );
     private final Injector injector;
 
     public CommandItem(
@@ -43,18 +31,11 @@ public final class CommandItem extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
 
-        // Listeners
-        for (final Class<? extends Listener> listenerClass : LISTENER_CLASSES) {
-            var listener = this.injector.getInstance(listenerClass);
-            this.getServer().getPluginManager().registerEvents(listener, this);
-        }
+        final Set<Listener> listeners = this.injector.getInstance(Key.get(new TypeLiteral<>() {}));
+        listeners.forEach(listener -> this.getServer().getPluginManager().registerEvents(listener, this));
 
-        // Commands
-        for (final Class<? extends CommandItemCommand> commandClass : COMMAND_CLASSES) {
-            var command = this.injector.getInstance(commandClass);
-            command.init();
-        }
-
+        final Set<CommandItemCommand> commands = this.injector.getInstance(Key.get(new TypeLiteral<>() {}));
+        commands.forEach(CommandItemCommand::init);
     }
 
     @Override
