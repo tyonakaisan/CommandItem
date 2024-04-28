@@ -71,7 +71,7 @@ tasks {
         // TabTps
         url("https://cdn.modrinth.com/data/cUhi3iB2/versions/QmxLremu/tabtps-spigot-1.3.21.jar")
         // Spark
-        url("https://ci.lucko.me/job/spark/396/artifact/spark-bukkit/build/libs/spark-1.10.55-bukkit.jar")
+        url("https://ci.lucko.me/job/spark/409/artifact/spark-bukkit/build/libs/spark-1.10.64-bukkit.jar")
         // PlaceholderAPI
         hangar("PlaceholderAPI", "2.11.5")
         // MiniPlaceholders
