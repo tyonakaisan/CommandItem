@@ -5,7 +5,7 @@ import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
 import github.tyonakaisan.commanditem.item.ItemCoolTimeManager;
-import github.tyonakaisan.commanditem.message.MessageManager;
+import github.tyonakaisan.commanditem.message.Messages;
 import github.tyonakaisan.commanditem.util.ActionUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
@@ -31,19 +31,19 @@ import java.util.Objects;
 public final class ItemUseListener implements Listener {
 
     private final ConfigFactory configFactory;
-    private final MessageManager messageManager;
+    private final Messages messages;
     private final Convert convert;
     private final ItemCoolTimeManager itemCoolTimeManager;
 
     @Inject
     public ItemUseListener(
             final ConfigFactory configFactory,
-            final MessageManager messageManager,
+            final Messages messages,
             final Convert convert,
             final ItemCoolTimeManager itemCoolTimeManager
     ) {
         this.configFactory = configFactory;
-        this.messageManager = messageManager;
+        this.messages = messages;
         this.convert = convert;
         this.itemCoolTimeManager = itemCoolTimeManager;
     }
@@ -111,7 +111,7 @@ public final class ItemUseListener implements Listener {
         this.convert.setPlayerHandItem(player, hand, itemStack, action);
 
         if (this.convert.isMaxUsesExceeded(itemStack, player)) {
-            player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "commanditem.error.max_uses_exceeded"));
+            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "commanditem.error.max_uses_exceeded"));
             return;
         }
 
@@ -123,7 +123,7 @@ public final class ItemUseListener implements Listener {
         var resolver = TagResolver.builder()
                 .tag("time", Tag.selfClosingInserting(Component.text(timeLeft.toSeconds() + 1)))
                 .build();
-        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "cooltime.error.during_cool_time", resolver));
+        player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "cooltime.error.during_cool_time", resolver));
         cancellableEvent.setCancelled(true);
     }
 

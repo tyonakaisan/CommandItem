@@ -9,7 +9,7 @@ import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
 import github.tyonakaisan.commanditem.item.CommandsItem;
 import github.tyonakaisan.commanditem.item.Convert;
-import github.tyonakaisan.commanditem.message.MessageManager;
+import github.tyonakaisan.commanditem.message.Messages;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -30,19 +30,19 @@ import java.util.Set;
 public final class GiveCommand implements CommandItemCommand {
 
     private final CommandItemRegistry commandItemRegistry;
-    private final MessageManager messageManager;
+    private final Messages messages;
     private final Convert convert;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public GiveCommand(
             final CommandItemRegistry commandItemRegistry,
-            final MessageManager messageManager,
+            final Messages messages,
             final Convert convert,
             final CommandManager<CommandSender> commandManager
     ) {
         this.commandItemRegistry = commandItemRegistry;
-        this.messageManager = messageManager;
+        this.messages = messages;
         this.convert = convert;
         this.commandManager = commandManager;
     }
@@ -76,8 +76,8 @@ public final class GiveCommand implements CommandItemCommand {
                         @Nullable CommandsItem commandsItem = this.commandItemRegistry.get(key);
 
                         if (commandsItem == null) {
-                            sender.sendMessage(this.messageManager.translatable(
-                                    MessageManager.Style.ERROR,
+                            sender.sendMessage(this.messages.translatable(
+                                    Messages.Style.ERROR,
                                     sender,
                                     "command.give.error.unknown_item",
                                     TagResolver.builder()
@@ -94,8 +94,8 @@ public final class GiveCommand implements CommandItemCommand {
 
                         this.giveItem(player, count, commandsItem);
 
-                        sender.sendMessage(this.messageManager.translatable(
-                                MessageManager.Style.INFO,
+                        sender.sendMessage(this.messages.translatable(
+                                Messages.Style.INFO,
                                 sender,
                                 "command.give.info.give",
                                 TagResolver.builder()
@@ -123,7 +123,7 @@ public final class GiveCommand implements CommandItemCommand {
                     .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
                     .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
                     .build();
-            player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.give.error.max_count", resolver));
+            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.give.error.max_count", resolver));
             return true;
         }
 

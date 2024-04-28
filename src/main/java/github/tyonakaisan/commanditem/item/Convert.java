@@ -56,7 +56,7 @@ public final class Convert {
         @Subst("value")
         var value = Objects.requireNonNull(pdc.get(NamespaceKeyUtils.idKey(), PersistentDataType.STRING));
 
-        return (this.commandItemRegistry.keySet().contains(Key.key(namespace, value)));
+        return this.commandItemRegistry.keySet().contains(Key.key(namespace, value));
     }
 
     public boolean isMaxUsesExceeded(ItemStack itemStack, Player player) {

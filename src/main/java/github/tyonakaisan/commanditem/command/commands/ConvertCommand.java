@@ -4,7 +4,7 @@ import cloud.commandframework.CommandManager;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.CommandItemRegistry;
-import github.tyonakaisan.commanditem.message.MessageManager;
+import github.tyonakaisan.commanditem.message.Messages;
 import github.tyonakaisan.commanditem.util.NamespaceKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
@@ -24,19 +24,19 @@ import java.util.List;
 public final class ConvertCommand implements CommandItemCommand {
 
     private final ComponentLogger logger;
-    private final MessageManager messageManager;
+    private final Messages messages;
     private final CommandItemRegistry commandItemRegistry;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public ConvertCommand(
             final ComponentLogger logger,
-            final MessageManager messageManager,
+            final Messages messages,
             final CommandItemRegistry commandItemRegistry,
             final CommandManager<CommandSender> commandManager
     ) {
         this.logger = logger;
-        this.messageManager = messageManager;
+        this.messages = messages;
         this.commandItemRegistry = commandItemRegistry;
         this.commandManager = commandManager;
     }
@@ -52,42 +52,45 @@ public final class ConvertCommand implements CommandItemCommand {
                         .withSuggestionsProvider((context, string) -> List.of("<file_name>"))
                         .build())
                 .handler(handler -> {
-                    final String fileName = handler.get("file_name");
-                    final var player = (Player) handler.getSender();
-                    final var item = player.getInventory().getItemInMainHand();
-                    final var allKey = this.commandItemRegistry.keySet().stream()
-                            .map(Key::value)
-                            .toList();
+                    if (handler.getSender() instanceof Player sender) {
+                        final String fileName = handler.get("file_name");
+                        final var item = sender.getInventory().getItemInMainHand();
+                        final var allKey = this.commandItemRegistry.keySet().stream()
+                                .map(Key::value)
+                                .toList();
 
-                    if (!NamespaceKeyUtils.checkKeyStringPattern(fileName)) {
-                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.non_matching_character"));
-                        return;
+                        if (!NamespaceKeyUtils.checkKeyStringPattern(fileName)) {
+                            sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.non_matching_character"));
+                            return;
+                        }
+
+                        if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespaceKeyUtils.idKey())) {
+                            sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.can_not_convert"));
+                            return;
+                        }
+
+                        if (allKey.contains(fileName)) {
+                            sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.file_name_exists"));
+                            return;
+                        }
+
+                        this.commandItemRegistry.createItemConfig(fileName, item);
+                        this.commandItemRegistry.reloadItemConfig();
+                        sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
+                                sender,
+                                "command.convert.success.convert",
+                                TagResolver.builder()
+                                        .tag("file", Tag.selfClosingInserting(Component.text(fileName + ".conf")))
+                                        .build()));
+
+                        sender.playSound(Sound.sound()
+                                .type(Key.key("minecraft:block.anvil.use"))
+                                .volume(0.25f)
+                                .pitch(1.25f)
+                                .build());
+                    } else {
+                        this.logger.warn("Not console commands.");
                     }
-
-                    if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespaceKeyUtils.idKey())) {
-                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.can_not_convert"));
-                        return;
-                    }
-
-                    if (allKey.contains(fileName)) {
-                        player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.convert.error.file_name_exists"));
-                        return;
-                    }
-
-                    this.commandItemRegistry.createItemConfig(fileName, item);
-                    this.commandItemRegistry.reloadItemConfig();
-                    player.sendMessage(this.messageManager.translatable(MessageManager.Style.SUCCESS,
-                            player,
-                            "command.convert.success.convert",
-                            TagResolver.builder()
-                                    .tag("file", Tag.selfClosingInserting(Component.text(fileName + ".conf")))
-                                    .build()));
-
-                    player.playSound(Sound.sound()
-                            .type(Key.key("minecraft:block.anvil.use"))
-                            .volume(0.25f)
-                            .pitch(1.25f)
-                            .build());
                 })
                 .build();
 
