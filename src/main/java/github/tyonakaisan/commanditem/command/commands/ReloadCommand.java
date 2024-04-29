@@ -41,7 +41,7 @@ public final class ReloadCommand implements CommandItemCommand {
                     this.configFactory.reloadPrimaryConfig();
                     this.commandItemRegistry.reloadItemConfig();
                     this.messages.reloadMessage();
-
+                    
                     final var sender = handler.sender();
                     sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS, sender, "command.reload.success.reload"));
                 })

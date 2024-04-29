@@ -25,6 +25,10 @@ public record CustomCommand(
         String runWeight
 ) {
 
+    public static CustomCommand empty() {
+        return new CustomCommand(ActionUtils.CommandAction.COMMAND, List.of(), "0", "0", "0", "0");
+    }
+
     public List<String> commands(Player player) {
         return this.commands.stream()
                 .map(text -> PlaceholderUtils.getPlainText(player, text))
