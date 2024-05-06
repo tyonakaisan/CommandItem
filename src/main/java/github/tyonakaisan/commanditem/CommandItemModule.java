@@ -10,7 +10,6 @@ import github.tyonakaisan.commanditem.command.commands.ConvertCommand;
 import github.tyonakaisan.commanditem.command.commands.GiveCommand;
 import github.tyonakaisan.commanditem.command.commands.ReloadCommand;
 import github.tyonakaisan.commanditem.listener.ItemUseListener;
-import github.tyonakaisan.commanditem.listener.JoinListener;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
@@ -67,7 +66,6 @@ public final class CommandItemModule extends AbstractModule {
     private void configureListener() {
         final Multibinder<Listener> listeners = Multibinder.newSetBinder(this.binder(), Listener.class);
         listeners.addBinding().to(ItemUseListener.class).in(Scopes.SINGLETON);
-        listeners.addBinding().to(JoinListener.class).in(Scopes.SINGLETON);
     }
 
     private void configureCommand() {

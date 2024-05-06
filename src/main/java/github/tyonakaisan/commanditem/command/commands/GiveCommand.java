@@ -2,9 +2,8 @@ package github.tyonakaisan.commanditem.command.commands;
 
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.item.CommandItemRegistry;
-import github.tyonakaisan.commanditem.item.CommandsItem;
-import github.tyonakaisan.commanditem.item.Convert;
+import github.tyonakaisan.commanditem.item.Item;
+import github.tyonakaisan.commanditem.item.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
@@ -30,22 +29,18 @@ import java.util.Set;
 @DefaultQualifier(NonNull.class)
 @SuppressWarnings("java:S1192")
 public final class GiveCommand implements CommandItemCommand {
-
-    private final CommandItemRegistry commandItemRegistry;
+    private final ItemRegistry itemRegistry;
     private final Messages messages;
-    private final Convert convert;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public GiveCommand(
-            final CommandItemRegistry commandItemRegistry,
+            final ItemRegistry itemRegistry,
             final Messages messages,
-            final Convert convert,
             final CommandManager<CommandSender> commandManager
     ) {
-        this.commandItemRegistry = commandItemRegistry;
+        this.itemRegistry = itemRegistry;
         this.messages = messages;
-        this.convert = convert;
         this.commandManager = commandManager;
     }
 
@@ -59,7 +54,7 @@ public final class GiveCommand implements CommandItemCommand {
                 .required("key",
                         StringParser.greedyStringParser(),
                         SuggestionProvider.blockingStrings((context, input) -> {
-                            final Set<Key> allArgs = this.commandItemRegistry.keySet();
+                            final Set<Key> allArgs = this.itemRegistry.keys();
                             return allArgs.stream()
                                     .map(Key::asString)
                                     .toList();
@@ -73,9 +68,9 @@ public final class GiveCommand implements CommandItemCommand {
                     final var count = (int) handler.optional("count").orElse(1);
 
                     players.values().forEach(player -> {
-                        @Nullable CommandsItem commandsItem = this.commandItemRegistry.get(key);
+                        @Nullable Item item = this.itemRegistry.item(key);
 
-                        if (commandsItem == null) {
+                        if (item == null) {
                             sender.sendMessage(this.messages.translatable(
                                     Messages.Style.ERROR,
                                     sender,
@@ -86,13 +81,13 @@ public final class GiveCommand implements CommandItemCommand {
                             return;
                         }
 
-                        var item = this.convert.toItemStack(commandsItem, player);
+                        var itemStack = this.itemRegistry.toItemStack(item, player);
 
-                        if (this.isMaxStackSize(player, item, count)) {
+                        if (this.isMaxStackSize(player, itemStack, count)) {
                             return;
                         }
 
-                        this.giveItem(player, count, commandsItem);
+                        this.giveItem(player, count, item);
 
                         sender.sendMessage(this.messages.translatable(
                                 Messages.Style.INFO,
@@ -100,7 +95,7 @@ public final class GiveCommand implements CommandItemCommand {
                                 "command.give.info.give",
                                 TagResolver.builder()
                                         .tag("player", Tag.selfClosingInserting(player.displayName()))
-                                        .tag("item", Tag.selfClosingInserting(item.displayName()))
+                                        .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
                                         .tag("count", Tag.selfClosingInserting(Component.text(count)))
                                         .build()));
 
@@ -130,9 +125,9 @@ public final class GiveCommand implements CommandItemCommand {
         return false;
     }
 
-    private void giveItem(Player player, int count, CommandsItem commandsItem) {
-        var itemStack = this.convert.toItemStack(commandsItem, player);
-        if (!commandsItem.stackable() || itemStack.getMaxStackSize() == 1) {
+    private void giveItem(Player player, int count, Item item) {
+        var itemStack = this.itemRegistry.toItemStack(item, player);
+        if (!item.attributes().stackable() || itemStack.getMaxStackSize() == 1) {
             for (int i = 0; i < count; i++) {
                 player.getInventory().addItem(itemStack);
             }

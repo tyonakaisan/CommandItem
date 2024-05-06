@@ -18,6 +18,9 @@ repositories {
 }
 
 dependencies {
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+
     // Paper
     compileOnly("io.papermc.paper", "paper-api", "1.20.4-R0.1-SNAPSHOT")
 
@@ -25,8 +28,8 @@ dependencies {
     paperLibrary("org.incendo", "cloud-paper", "2.0.0-beta.2")
 
     // Config
-    paperLibrary("org.spongepowered", "configurate-hocon", "4.2.0-SNAPSHOT")
-    paperLibrary("net.kyori", "adventure-serializer-configurate4", "4.16.0")
+    implementation("org.spongepowered", "configurate-hocon", "4.2.0-SNAPSHOT")
+    implementation("net.kyori", "adventure-serializer-configurate4", "4.16.0")
 
     // Plugins
     compileOnly("me.clip", "placeholderapi", "2.11.5")
@@ -93,5 +96,9 @@ tasks {
         downloadPlugins {
             downloadPlugins.from(paperPlugins)
         }
+    }
+
+    test {
+        useJUnitPlatform()
     }
 }

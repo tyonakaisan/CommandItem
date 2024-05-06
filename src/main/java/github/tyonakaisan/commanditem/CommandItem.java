@@ -1,9 +1,6 @@
 package github.tyonakaisan.commanditem;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.TypeLiteral;
+import com.google.inject.*;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Bukkit;
@@ -16,6 +13,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 @DefaultQualifier(NonNull.class)
+@Singleton
 public final class CommandItem extends JavaPlugin {
 
     private final Injector injector;
@@ -25,6 +23,8 @@ public final class CommandItem extends JavaPlugin {
             final ComponentLogger logger
     ) {
         this.injector = Guice.createInjector(new CommandItemModule(this, dataDirectory, logger));
+
+        CommandItemProvider.register(this);
     }
 
     @Override

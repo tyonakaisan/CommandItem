@@ -2,9 +2,9 @@ package github.tyonakaisan.commanditem.command.commands;
 
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.item.CommandItemRegistry;
+import github.tyonakaisan.commanditem.item.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
-import github.tyonakaisan.commanditem.util.NamespaceKeyUtils;
+import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -24,19 +24,19 @@ public final class ConvertCommand implements CommandItemCommand {
 
     private final ComponentLogger logger;
     private final Messages messages;
-    private final CommandItemRegistry commandItemRegistry;
+    private final ItemRegistry itemRegistry;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public ConvertCommand(
             final ComponentLogger logger,
             final Messages messages,
-            final CommandItemRegistry commandItemRegistry,
+            final ItemRegistry itemRegistry,
             final CommandManager<CommandSender> commandManager
     ) {
         this.logger = logger;
         this.messages = messages;
-        this.commandItemRegistry = commandItemRegistry;
+        this.itemRegistry = itemRegistry;
         this.commandManager = commandManager;
     }
 
@@ -52,16 +52,16 @@ public final class ConvertCommand implements CommandItemCommand {
                     if (handler.sender() instanceof Player sender) {
                         final String fileName = handler.get("id");
                         final var item = sender.getInventory().getItemInMainHand();
-                        final var allKey = this.commandItemRegistry.keySet().stream()
+                        final var allKey = this.itemRegistry.keys().stream()
                                 .map(Key::value)
                                 .toList();
 
-                        if (!NamespaceKeyUtils.checkKeyStringPattern(fileName)) {
+                        if (!NamespacedKeyUtils.checkKeyStringPattern(fileName)) {
                             sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.non_matching_character"));
                             return;
                         }
 
-                        if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespaceKeyUtils.idKey())) {
+                        if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
                             sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.can_not_convert"));
                             return;
                         }
@@ -71,8 +71,8 @@ public final class ConvertCommand implements CommandItemCommand {
                             return;
                         }
 
-                        this.commandItemRegistry.createItemConfig(fileName, item);
-                        this.commandItemRegistry.reloadItemConfig();
+                        this.itemRegistry.createItemConfig(fileName, item);
+                        this.itemRegistry.reloadItemConfig();
                         sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
                                 sender,
                                 "command.convert.success.convert",
