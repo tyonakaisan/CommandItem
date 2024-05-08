@@ -21,8 +21,8 @@ public record Command(
         String delay,
         String runWeight
 ) {
-    public static Command empty() {
-        return new Command(Action.Command.COMMAND, List.of(), true, "0", "0", "0", "0");
+    public static Command defaultCreate() {
+        return new Command(Action.Command.COMMAND, List.of(), true, "1", "1", "0", "1");
     }
 
     public List<String> commands(final Player player) {
@@ -37,16 +37,16 @@ public record Command(
                 .toList();
     }
 
-    public double repeat(final Player player) {
-        return PlaceholderUtils.calculate(player, this.repeat);
+    public int repeat(final Player player) {
+        return (int) PlaceholderUtils.calculate(player, this.repeat);
     }
 
-    public double period(final Player player) {
-        return PlaceholderUtils.calculate(player, this.period);
+    public int period(final Player player) {
+        return (int) PlaceholderUtils.calculate(player, this.period);
     }
 
-    public double delay(final Player player) {
-        return PlaceholderUtils.calculate(player, this.delay);
+    public int delay(final Player player) {
+        return (int) PlaceholderUtils.calculate(player, this.delay);
     }
 
     public double runWeight(final Player player) {
@@ -54,6 +54,10 @@ public record Command(
     }
 
     public void repeatCommands(final Player player, boolean console) {
+        if (this.repeat(player) == 0) {
+            return;
+        }
+
         var period = this.period(player);
         var commandItem = CommandItemProvider.instance();
 
@@ -61,11 +65,11 @@ public record Command(
         if (period <= -1) {
             commandItem.getServer().getScheduler().runTaskLater(commandItem, () -> {
                 for (int i = 0; i < this.repeat(player); i++) {
-                    new ReCommandTask(this, player, console).run();
+                    new CommandTask(this, player, console).run();
                 }
-            }, (long) this.delay(player));
+            }, this.delay(player));
         } else {
-            new ReCommandTask(this, player, console).runTaskTimer(commandItem, (long) this.delay(player), (long) period);
+            new CommandTask(this, player, console).runTaskTimer(commandItem, this.delay(player), period);
         }
     }
 }

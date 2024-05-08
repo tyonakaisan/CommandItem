@@ -15,8 +15,9 @@ public final class CoolTimeSettings {
             "vanilla" applies to all items of the same type.
             
             VANILLA: Vanilla specification alert (animation after use of ender pearls).
-            MESSAGE: Send a message to chat.""")
-    private AlertType coolTimeAlertType = AlertType.MESSAGE;
+            CHAT: Send a message to chat.
+            ACTION_BAR: Send a message to action bar""")
+    private AlertType coolTimeAlertType = AlertType.CHAT;
 
     public AlertType coolTimeAlertType() {
         return this.coolTimeAlertType;
@@ -24,6 +25,7 @@ public final class CoolTimeSettings {
 
     public enum AlertType {
         VANILLA,
-        MESSAGE
+        CHAT,
+        ACTION_BAR
     }
 }

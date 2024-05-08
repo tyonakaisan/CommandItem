@@ -56,22 +56,16 @@ public final class CommandItemHandler {
                 return;
             }
 
-            this.convert.setPlayerHandItem(player, itemStack, hand, action);
-
             if (this.itemRegistry.isMaxUsesExceeded(itemStack, player)) {
                 player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "commanditem.error.max_uses_exceeded"));
                 return;
             }
 
-            var commands = item.commands().getOrDefault(action, List.of());
+            this.convert.setPlayerHandItem(player, itemStack, hand, action);
 
             if (timeLeft.isZero() || timeLeft.isNegative()) {
-
-                commands.forEach(command ->
-                        command.repeatCommands(player, command.isConsole()));
-
-                if (!commands.isEmpty()) {
-
+                item.runRandomCommands(player, action);
+                if (!item.commands().getOrDefault(action, List.of()).isEmpty()) {
                     this.coolTimeManager.removeAllCoolTime(player.getUniqueId(), key);
                     this.coolTimeManager.setCoolTime(player.getUniqueId(), key, Duration.ofSeconds(item.attributes().coolTime(player)));
                 }

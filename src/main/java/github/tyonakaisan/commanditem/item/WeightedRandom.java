@@ -25,4 +25,8 @@ public final class WeightedRandom<T> {
         var value = ThreadLocalRandom.current().nextDouble() * this.total;
         return this.map.higherEntry(value).getValue();
     }
+
+    public int size() {
+        return this.map.size();
+    }
 }
