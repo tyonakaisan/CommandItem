@@ -15,12 +15,13 @@ public record Attributes(
         Key key,
         boolean stackable,
         boolean placeable,
+        boolean hideCoolTimeAnnounce,
         String maxUses,
         String coolTime,
         Map<Action.Item, String> pickCommands
 ) {
     public static Attributes defaultCreate(final Key key) {
-        return new Attributes(key, true, true, "0", "0", Map.of(Action.Item.LEFT_CLICK, "1"));
+        return new Attributes(key, true, true, false, "1", "0", Map.of(Action.Item.LEFT_CLICK, "1"));
     }
 
     public int maxUses(final Player player) {

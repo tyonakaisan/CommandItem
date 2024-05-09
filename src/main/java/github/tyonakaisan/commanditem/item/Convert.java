@@ -2,7 +2,6 @@ package github.tyonakaisan.commanditem.item;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.util.ItemBuilder;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import org.bukkit.Material;
@@ -25,15 +24,12 @@ ItemMetaを変える場合は必ずcloneすること
 public final class Convert {
 
     private final ItemRegistry itemRegistry;
-    private final ConfigFactory configFactory;
 
     @Inject
     public Convert(
-            final ItemRegistry itemRegistry,
-            final ConfigFactory configFactory
+            final ItemRegistry itemRegistry
     ) {
         this.itemRegistry = itemRegistry;
-        this.configFactory = configFactory;
     }
 
     public void setPlayerHandItem(final Player player, final ItemStack itemStack, final @Nullable EquipmentSlot equipmentSlot, final Action.Item action) {
@@ -57,7 +53,7 @@ public final class Convert {
         }
 
         // return usage counts
-        var counts = Optional.of(cloneItemStack)
+        int oldCounts = Optional.of(cloneItemStack)
                 .filter(ItemStack::hasItemMeta)
                 .map(ItemStack::getItemMeta)
                 .map(ItemMeta::getPersistentDataContainer)
@@ -65,9 +61,11 @@ public final class Convert {
                 .map(pdc -> pdc.get(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER))
                 .orElse(Integer.MAX_VALUE);
 
-        cloneItemStack.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, counts));
+        var newCounts = oldCounts + 1;
 
-        if (counts >= item.attributes().maxUses(player)) {
+        cloneItemStack.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, newCounts));
+
+        if (newCounts >= item.attributes().maxUses(player)) {
             return cloneItemStack.getAmount() == 1
                     ? new ItemStack(Material.AIR)
                     : ItemBuilder.of(this.itemRegistry.toItemStack(item, player))

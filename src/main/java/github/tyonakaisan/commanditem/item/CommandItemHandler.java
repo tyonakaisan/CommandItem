@@ -1,6 +1,7 @@
 package github.tyonakaisan.commanditem.item;
 
 import com.google.inject.Inject;
+import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.message.Messages;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.Tag;
@@ -19,6 +20,7 @@ import java.util.List;
 @DefaultQualifier(NonNull.class)
 public final class CommandItemHandler {
 
+    private final ConfigFactory configFactory;
     private final ItemRegistry itemRegistry;
     private final CoolTimeManager coolTimeManager;
     private final Convert convert;
@@ -26,11 +28,13 @@ public final class CommandItemHandler {
 
     @Inject
     public CommandItemHandler(
+            final ConfigFactory configFactory,
             final ItemRegistry itemRegistry,
             final CoolTimeManager coolTimeManager,
             final Convert convert,
             final Messages messages
     ) {
+        this.configFactory = configFactory;
         this.itemRegistry = itemRegistry;
         this.coolTimeManager = coolTimeManager;
         this.convert = convert;
@@ -44,14 +48,8 @@ public final class CommandItemHandler {
             var key = item.attributes().key();
             var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
 
-            if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key)) {
-                player.sendMessage(this.messages.translatable(
-                        Messages.Style.ERROR,
-                        player,
-                        "cooltime.error.during_cool_time",
-                        TagResolver.builder()
-                                .tag("time", Tag.selfClosingInserting(Component.text(timeLeft.toSeconds() + 1)))
-                                .build()));
+            if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key) && item.attributes().hideCoolTimeAnnounce()) {
+                this.sendCoolTimeMessage(player, itemStack, timeLeft);
                 event.setCancelled(true);
                 return;
             }
@@ -70,6 +68,28 @@ public final class CommandItemHandler {
                     this.coolTimeManager.setCoolTime(player.getUniqueId(), key, Duration.ofSeconds(item.attributes().coolTime(player)));
                 }
             }
+        }
+    }
+
+    public void sendCoolTimeMessage(final Player player, final ItemStack itemStack, final Duration duration) {
+        var type = this.configFactory.primaryConfig().coolTime().coolTimeAlertType();
+
+        switch (type) {
+            case CHAT -> player.sendMessage(this.messages.translatable(
+                    Messages.Style.ERROR,
+                    player,
+                    "cooltime.error.during_cool_time",
+                    TagResolver.builder()
+                            .tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1)))
+                            .build()));
+            case ACTION_BAR -> player.sendActionBar(this.messages.translatable(
+                    Messages.Style.ERROR,
+                    player,
+                    "cooltime.error.during_cool_time",
+                    TagResolver.builder()
+                            .tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1)))
+                            .build()));
+            case VANILLA -> player.setCooldown(itemStack.getType(), (int) duration.toSeconds());
         }
     }
 }
