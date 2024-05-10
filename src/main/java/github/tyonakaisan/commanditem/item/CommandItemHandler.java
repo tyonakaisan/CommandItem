@@ -1,6 +1,7 @@
 package github.tyonakaisan.commanditem.item;
 
 import com.google.inject.Inject;
+import github.tyonakaisan.commanditem.CommandItemProvider;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.message.Messages;
 import net.kyori.adventure.text.Component;
@@ -41,7 +42,7 @@ public final class CommandItemHandler {
         this.messages = messages;
     }
 
-    public void itemUse(final Cancellable event, final Player player, final @Nullable ItemStack itemStack, final @Nullable EquipmentSlot hand, final Action.Item action) {
+    public void itemUse(final @Nullable ItemStack itemStack, final Player player, final Action.Item action, final @Nullable EquipmentSlot hand, final Cancellable event) {
         final @Nullable Item item = this.itemRegistry.toItem(itemStack);
 
         if (item != null && itemStack != null) {
@@ -49,7 +50,7 @@ public final class CommandItemHandler {
             var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
 
             if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key) && item.attributes().hideCoolTimeAnnounce()) {
-                this.sendCoolTimeMessage(player, itemStack, timeLeft);
+                this.sendCoolTimeMessage(itemStack, player, timeLeft);
                 event.setCancelled(true);
                 return;
             }
@@ -59,10 +60,10 @@ public final class CommandItemHandler {
                 return;
             }
 
-            this.convert.setPlayerHandItem(player, itemStack, hand, action);
+            this.convert.setPlayerHandItem(itemStack, player, action, hand);
 
             if (timeLeft.isZero() || timeLeft.isNegative()) {
-                item.runRandomCommands(player, action);
+                this.runRandomCommands(item, player, action);
                 if (!item.commands().getOrDefault(action, List.of()).isEmpty()) {
                     this.coolTimeManager.removeAllCoolTime(player.getUniqueId(), key);
                     this.coolTimeManager.setCoolTime(player.getUniqueId(), key, Duration.ofSeconds(item.attributes().coolTime(player)));
@@ -71,7 +72,7 @@ public final class CommandItemHandler {
         }
     }
 
-    public void sendCoolTimeMessage(final Player player, final ItemStack itemStack, final Duration duration) {
+    private void sendCoolTimeMessage(final ItemStack itemStack, final Player player, final Duration duration) {
         var type = this.configFactory.primaryConfig().coolTime().coolTimeAlertType();
 
         switch (type) {
@@ -90,6 +91,48 @@ public final class CommandItemHandler {
                             .tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1)))
                             .build()));
             case VANILLA -> player.setCooldown(itemStack.getType(), (int) duration.toSeconds());
+        }
+    }
+
+    private void runRandomCommands(final Item item, final Player player, final Action.Item action) {
+        if (item.commands().getOrDefault(action, List.of()).isEmpty()) {
+            return;
+        }
+
+        var max = this.convert.pickCommands(item, player, action);
+        var weightedCommands = this.convert.weightedCommands(item, player, action);
+        if (weightedCommands.size() == 0 || max == 0 || item.attributes().maxUses(player) == 0) {
+            return;
+        }
+
+        if (max <= -1) {
+            item.commands().get(action).forEach(command -> this.repeatCommands(command, player));
+        } else {
+            for (int i = 0; i < max; i++) {
+                var command = weightedCommands.select();
+                this.repeatCommands(command, player);
+            }
+        }
+    }
+
+    private void repeatCommands(final Command command, final Player player) {
+        if (command.repeat(player) == 0) {
+            return;
+        }
+
+        var period = command.period(player);
+        var console = command.isConsole();
+        var commandItem = CommandItemProvider.instance();
+
+        // periodが-1以下の場合はfor文
+        if (period <= -1) {
+            commandItem.getServer().getScheduler().runTaskLater(commandItem, () -> {
+                for (int i = 0; i < command.repeat(player); i++) {
+                    new CommandTask(command, player, console).run();
+                }
+            }, command.delay(player));
+        } else {
+            new CommandTask(command, player, console).runTaskTimer(commandItem, command.delay(player), period);
         }
     }
 }

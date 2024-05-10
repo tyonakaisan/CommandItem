@@ -20,22 +20,11 @@ public record Attributes(
         String coolTime,
         Map<Action.Item, String> pickCommands
 ) {
-    public static Attributes defaultCreate(final Key key) {
-        return new Attributes(key, true, true, false, "1", "0", Map.of(Action.Item.LEFT_CLICK, "1"));
-    }
-
     public int maxUses(final Player player) {
         return (int) PlaceholderUtils.calculate(player, this.maxUses);
     }
 
     public int coolTime(final Player player) {
         return (int) PlaceholderUtils.calculate(player, this.coolTime);
-    }
-
-    public int pickCommands(final Player player, final Action.Item action) {
-        if (this.pickCommands.get(action) == null) {
-            return 0;
-        }
-        return (int) PlaceholderUtils.calculate(player, this.pickCommands.get(action));
     }
 }

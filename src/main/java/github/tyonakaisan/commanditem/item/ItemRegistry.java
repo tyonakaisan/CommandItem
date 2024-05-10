@@ -29,10 +29,11 @@ import java.util.stream.Stream;
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class ItemRegistry {
-
-    private final Path dataDirectory;
+    private final Path itemConfigDir;
     private final ConfigFactory configFactory;
     private final ComponentLogger logger;
+    private final Convert convert;
+
     private final ObjectMapper<Item> mapper;
 
     private final BiMap<Key, Item> itemMap = Maps.synchronizedBiMap(HashBiMap.create());
@@ -41,11 +42,13 @@ public final class ItemRegistry {
     public ItemRegistry(
             final Path dataDirectory,
             final ConfigFactory configFactory,
-            final ComponentLogger logger
+            final ComponentLogger logger,
+            final Convert convert
     ) throws SerializationException {
-        this.dataDirectory = dataDirectory;
+        this.itemConfigDir = dataDirectory.resolve("items");
         this.configFactory = configFactory;
         this.logger = logger;
+        this.convert = convert;
 
         this.mapper = ObjectMapper.factory().get(Item.class);
         this.reloadItemConfig();
@@ -58,25 +61,23 @@ public final class ItemRegistry {
     }
 
     public void createItemConfig(@Subst("value") final String fileName, final ItemStack itemStack) {
-        var itemFilePath = this.dataDirectory.resolve("items");
-
-        if (!Files.exists(itemFilePath)) {
+        if (!Files.exists(this.itemConfigDir)) {
             try {
-                Files.createDirectories(itemFilePath);
+                Files.createDirectories(this.itemConfigDir);
             } catch (final IOException e) {
-                this.logger.error(String.format("Failed to create parent directories for '%s'", itemFilePath), e);
+                this.logger.error(String.format("Failed to create parent directories for '%s'", this.itemConfigDir), e);
                 return;
             }
         }
 
-        final var file = itemFilePath.resolve(fileName + ".conf");
+        final var file = this.itemConfigDir.resolve(fileName + ".conf");
         final var loader = this.configFactory.configurationLoader(file);
 
         try {
             final var root = loader.load();
             @Subst("key")
             var namespace = NamespacedKeyUtils.namespace();
-            final Item config = Item.defaultConvert(Key.key(namespace, fileName), itemStack);
+            final Item config = this.convert.defaultItem(Key.key(namespace, fileName), itemStack);
 
             logger.info("{}", config);
 
@@ -91,18 +92,16 @@ public final class ItemRegistry {
     }
 
     private void loadItemConfig() {
-        var itemFilePath = this.dataDirectory.resolve("items");
-
-        if (!Files.exists(itemFilePath)) {
+        if (!Files.exists(this.itemConfigDir)) {
             try {
-                Files.createDirectories(itemFilePath);
+                Files.createDirectories(this.itemConfigDir);
             } catch (final IOException e) {
-                this.logger.error(String.format("Failed to create parent directories for '%s'", itemFilePath), e);
+                this.logger.error(String.format("Failed to create parent directories for '%s'", this.itemConfigDir), e);
                 return;
             }
         }
 
-        try (Stream<Path> paths = Files.walk(itemFilePath)) {
+        try (Stream<Path> paths = Files.walk(this.itemConfigDir)) {
             paths.filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".conf"))
                     .forEach(file -> {

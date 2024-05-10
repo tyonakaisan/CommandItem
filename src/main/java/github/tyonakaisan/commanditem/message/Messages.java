@@ -32,9 +32,8 @@ import java.util.stream.Stream;
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class Messages {
-
-    private final Path dataDirectory;
     private final ComponentLogger logger;
+    private final Path messagesDir;
 
     private final Map<Locale, ResourceBundle> locales = new HashMap<>();
     private final Map<Locale, String> supportedLocales = Map.of(
@@ -50,8 +49,8 @@ public final class Messages {
             final Path dataDirectory,
             final ComponentLogger logger
     ) {
-        this.dataDirectory = dataDirectory;
         this.logger = logger;
+        this.messagesDir = dataDirectory.resolve("locale");
 
         this.reloadMessage();
     }
@@ -63,21 +62,19 @@ public final class Messages {
     }
 
     public void loadMessageFile() {
-        final var path = this.dataDirectory.resolve("locale");
-
-        if (!Files.exists(path)) {
+        if (!Files.exists(this.messagesDir)) {
             try {
-                Files.createDirectories(path);
+                Files.createDirectories(this.messagesDir);
             } catch (final IOException e) {
-                this.logger.error(String.format("Failed to create directory %s", path), e);
+                this.logger.error(String.format("Failed to create directory %s", this.messagesDir), e);
             }
         }
 
         // Create supported locales
-        this.createSupportedLocales(path);
+        this.createSupportedLocales(this.messagesDir);
 
         // Load messages_*.properties locale
-        try (final Stream<Path> paths = Files.list(path)) {
+        try (final Stream<Path> paths = Files.list(this.messagesDir)) {
             paths.filter(Files::isRegularFile)
                     .forEach(this::loadMatchFile);
         } catch (final IOException e) {

@@ -31,7 +31,7 @@ public final class ItemUseListener implements Listener {
         @Nullable ItemStack itemStack = event.getItem();
         @Nullable EquipmentSlot equipmentSlot = event.getHand();
 
-        this.commandItemHandler.itemUse(event, player, itemStack, equipmentSlot, Action.Item.fromBukkitAction(event.getAction()));
+        this.commandItemHandler.itemUse(itemStack, player, Action.Item.fromBukkitAction(event.getAction()), equipmentSlot, event);
     }
 
     @EventHandler
@@ -40,7 +40,7 @@ public final class ItemUseListener implements Listener {
         var itemStack = event.getItem();
         var equipmentSlot = event.getHand();
 
-        this.commandItemHandler.itemUse(event, player, itemStack, equipmentSlot, Action.Item.CONSUME);
+        this.commandItemHandler.itemUse(itemStack, player, Action.Item.CONSUME, equipmentSlot, event);
     }
 
     @EventHandler
@@ -49,6 +49,6 @@ public final class ItemUseListener implements Listener {
         var itemStack = event.getItemInHand();
         var equipmentSlot = event.getHand();
 
-        this.commandItemHandler.itemUse(event, player, itemStack, equipmentSlot, Action.Item.PLACE);
+        this.commandItemHandler.itemUse(itemStack, player, Action.Item.PLACE, equipmentSlot, event);
     }
 }
