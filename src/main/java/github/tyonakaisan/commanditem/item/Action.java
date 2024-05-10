@@ -13,7 +13,11 @@ public final class Action {
         LEFT_CLICK,
         PHYSICAL,
         CONSUME,
-        PLACE;
+        PLACE,
+        BREAK, // unsupported
+        DROP, // unsupported
+        ITEM_DAMAGE, // unsupported
+        ITEM_BREAK; // unsupported
 
         public static Action.Item fromBukkitAction(final org.bukkit.event.block.Action action) {
             return switch (action) {
