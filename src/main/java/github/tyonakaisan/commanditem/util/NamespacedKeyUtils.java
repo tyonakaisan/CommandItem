@@ -1,17 +1,14 @@
 package github.tyonakaisan.commanditem.util;
 
 import org.bukkit.NamespacedKey;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.util.regex.Pattern;
 
-@DefaultQualifier(NonNull.class)
 @SuppressWarnings("unused")
-public final class NamespaceKeyUtils {
+public final class NamespacedKeyUtils {
 
-    private NamespaceKeyUtils() {
-        throw new IllegalStateException("Utility class");
+    private NamespacedKeyUtils() {
+
     }
 
     private static final Pattern PATTERN = Pattern.compile("[a-z0-9_\\-.]+");

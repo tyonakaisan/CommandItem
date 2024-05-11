@@ -1,34 +1,33 @@
 package github.tyonakaisan.commanditem.command.commands;
 
-import cloud.commandframework.CommandManager;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
-import github.tyonakaisan.commanditem.item.CommandItemRegistry;
-import github.tyonakaisan.commanditem.message.MessageManager;
+import github.tyonakaisan.commanditem.item.ItemRegistry;
+import github.tyonakaisan.commanditem.message.Messages;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.incendo.cloud.CommandManager;
 
 @DefaultQualifier(NonNull.class)
 public final class ReloadCommand implements CommandItemCommand {
 
     private final ConfigFactory configFactory;
-    private final CommandItemRegistry commandItemRegistry;
-    private final MessageManager messageManager;
+    private final ItemRegistry itemRegistry;
+    private final Messages messages;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public ReloadCommand(
             final ConfigFactory configFactory,
-            final CommandItemRegistry commandItemRegistry,
-            final MessageManager messageManager,
+            final ItemRegistry itemRegistry,
+            final Messages messages,
             final CommandManager<CommandSender> commandManager
     ) {
         this.configFactory = configFactory;
-        this.commandItemRegistry = commandItemRegistry;
-        this.messageManager = messageManager;
+        this.itemRegistry = itemRegistry;
+        this.messages = messages;
         this.commandManager = commandManager;
     }
 
@@ -40,11 +39,11 @@ public final class ReloadCommand implements CommandItemCommand {
                 .senderType(CommandSender.class)
                 .handler(handler -> {
                     this.configFactory.reloadPrimaryConfig();
-                    this.commandItemRegistry.reloadItemConfig();
-                    this.messageManager.reloadMessageFile();
-
-                    final var sender = (Player) handler.getSender();
-                    sender.sendMessage(this.messageManager.translatable(MessageManager.Style.SUCCESS, sender, "command.reload.success.reload"));
+                    this.itemRegistry.reloadItemConfig();
+                    this.messages.reloadMessage();
+                    
+                    final var sender = handler.sender();
+                    sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS, sender, "command.reload.success.reload"));
                 })
                 .build();
 

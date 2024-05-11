@@ -1,15 +1,10 @@
 package github.tyonakaisan.commanditem.command.commands;
 
-import cloud.commandframework.CommandManager;
-import cloud.commandframework.arguments.standard.IntegerArgument;
-import cloud.commandframework.bukkit.arguments.selector.MultiplePlayerSelector;
-import cloud.commandframework.bukkit.parsers.selector.MultiplePlayerSelectorArgument;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.item.CommandItemRegistry;
-import github.tyonakaisan.commanditem.item.CommandsItem;
-import github.tyonakaisan.commanditem.item.Convert;
-import github.tyonakaisan.commanditem.message.MessageManager;
+import github.tyonakaisan.commanditem.item.Item;
+import github.tyonakaisan.commanditem.item.ItemRegistry;
+import github.tyonakaisan.commanditem.message.Messages;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -21,6 +16,12 @@ import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
+import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.bukkit.data.Selector;
+import org.incendo.cloud.bukkit.parser.selector.MultiplePlayerSelectorParser;
+import org.incendo.cloud.parser.standard.IntegerParser;
+import org.incendo.cloud.parser.standard.StringParser;
+import org.incendo.cloud.suggestion.SuggestionProvider;
 import org.intellij.lang.annotations.Subst;
 
 import java.util.Set;
@@ -28,22 +29,18 @@ import java.util.Set;
 @DefaultQualifier(NonNull.class)
 @SuppressWarnings("java:S1192")
 public final class GiveCommand implements CommandItemCommand {
-
-    private final CommandItemRegistry commandItemRegistry;
-    private final MessageManager messageManager;
-    private final Convert convert;
+    private final ItemRegistry itemRegistry;
+    private final Messages messages;
     private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public GiveCommand(
-            final CommandItemRegistry commandItemRegistry,
-            final MessageManager messageManager,
-            final Convert convert,
+            final ItemRegistry itemRegistry,
+            final Messages messages,
             final CommandManager<CommandSender> commandManager
     ) {
-        this.commandItemRegistry = commandItemRegistry;
-        this.messageManager = messageManager;
-        this.convert = convert;
+        this.itemRegistry = itemRegistry;
+        this.messages = messages;
         this.commandManager = commandManager;
     }
 
@@ -53,31 +50,29 @@ public final class GiveCommand implements CommandItemCommand {
                 .literal("give")
                 .permission("commanditem.command.give")
                 .senderType(CommandSender.class)
-                .argument(MultiplePlayerSelectorArgument.of("player"))
-                .argument(this.commandManager.argumentBuilder(String.class, "key")
-                        .withSuggestionsProvider(
-                                ((context, string) -> {
-                                    final Set<Key> allArgs = this.commandItemRegistry.keySet();
-                                    return allArgs.stream()
-                                            .map(Key::asString)
-                                            .toList();
-                                })
-                        )
-                        .build())
-                .argument(IntegerArgument.optional("count"))
+                .required("player", MultiplePlayerSelectorParser.multiplePlayerSelectorParser())
+                .required("key",
+                        StringParser.greedyStringParser(),
+                        SuggestionProvider.blockingStrings((context, input) -> {
+                            final Set<Key> allArgs = this.itemRegistry.keys();
+                            return allArgs.stream()
+                                    .map(Key::asString)
+                                    .toList();
+                }))
+                .optional("count", IntegerParser.integerParser())
                 .handler(handler -> {
-                    final var sender = handler.getSender();
-                    final MultiplePlayerSelector players = handler.get("player");
+                    final var sender = handler.sender();
+                    final Selector<Player> players = handler.get("player");
                     final @Subst("value") String keyValue = handler.get("key");
                     final var key = Key.key(keyValue);
-                    final var count = (int) handler.getOptional("count").orElse(1);
+                    final var count = (int) handler.optional("count").orElse(1);
 
-                    players.getPlayers().forEach(player -> {
-                        @Nullable CommandsItem commandsItem = this.commandItemRegistry.get(key);
+                    players.values().forEach(player -> {
+                        @Nullable Item item = this.itemRegistry.item(key);
 
-                        if (commandsItem == null) {
-                            sender.sendMessage(this.messageManager.translatable(
-                                    MessageManager.Style.ERROR,
+                        if (item == null) {
+                            sender.sendMessage(this.messages.translatable(
+                                    Messages.Style.ERROR,
                                     sender,
                                     "command.give.error.unknown_item",
                                     TagResolver.builder()
@@ -86,21 +81,21 @@ public final class GiveCommand implements CommandItemCommand {
                             return;
                         }
 
-                        var item = this.convert.toItemStack(commandsItem, player);
+                        var itemStack = this.itemRegistry.toItemStack(item, player);
 
-                        if (this.isMaxStackSize(player, item, count)) {
+                        if (this.isMaxStackSize(player, itemStack, count)) {
                             return;
                         }
 
-                        this.giveItem(player, count, commandsItem);
+                        this.giveItem(player, count, item);
 
-                        sender.sendMessage(this.messageManager.translatable(
-                                MessageManager.Style.INFO,
+                        sender.sendMessage(this.messages.translatable(
+                                Messages.Style.INFO,
                                 sender,
                                 "command.give.info.give",
                                 TagResolver.builder()
                                         .tag("player", Tag.selfClosingInserting(player.displayName()))
-                                        .tag("item", Tag.selfClosingInserting(item.displayName()))
+                                        .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
                                         .tag("count", Tag.selfClosingInserting(Component.text(count)))
                                         .build()));
 
@@ -123,16 +118,16 @@ public final class GiveCommand implements CommandItemCommand {
                     .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
                     .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
                     .build();
-            player.sendMessage(this.messageManager.translatable(MessageManager.Style.ERROR, player, "command.give.error.max_count", resolver));
+            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.give.error.max_count", resolver));
             return true;
         }
 
         return false;
     }
 
-    private void giveItem(Player player, int count, CommandsItem commandsItem) {
-        var itemStack = this.convert.toItemStack(commandsItem, player);
-        if (!commandsItem.stackable() || itemStack.getMaxStackSize() == 1) {
+    private void giveItem(Player player, int count, Item item) {
+        var itemStack = this.itemRegistry.toItemStack(item, player);
+        if (!item.attributes().stackable() || itemStack.getMaxStackSize() == 1) {
             for (int i = 0; i < count; i++) {
                 player.getInventory().addItem(itemStack);
             }

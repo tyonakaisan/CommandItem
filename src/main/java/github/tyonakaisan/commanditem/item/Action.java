@@ -1,24 +1,25 @@
-package github.tyonakaisan.commanditem.util;
+package github.tyonakaisan.commanditem.item;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
-@SuppressWarnings("unused")
-public final class ActionUtils {
+public final class Action {
 
-    private ActionUtils() {
-        throw new IllegalStateException("Utility class");
-    }
+    private Action() {}
 
-    public enum ItemAction {
+    public enum Item {
         RIGHT_CLICK,
         LEFT_CLICK,
         PHYSICAL,
         CONSUME,
-        PLACE;
+        PLACE,
+        BREAK, // unsupported
+        DROP, // unsupported
+        ITEM_DAMAGE, // unsupported
+        ITEM_BREAK; // unsupported
 
-        public static ItemAction fromBukkitAction(org.bukkit.event.block.Action action) {
+        public static Action.Item fromBukkitAction(final org.bukkit.event.block.Action action) {
             return switch (action) {
                 case LEFT_CLICK_AIR, LEFT_CLICK_BLOCK -> LEFT_CLICK;
                 case RIGHT_CLICK_AIR, RIGHT_CLICK_BLOCK -> RIGHT_CLICK;
@@ -27,7 +28,7 @@ public final class ActionUtils {
         }
     }
 
-    public enum CommandAction {
+    public enum Command {
         COMMAND,
         MESSAGE,
         BROAD_CAST
