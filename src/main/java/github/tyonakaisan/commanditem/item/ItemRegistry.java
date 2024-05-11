@@ -32,7 +32,6 @@ public final class ItemRegistry {
     private final Path itemConfigDir;
     private final ConfigFactory configFactory;
     private final ComponentLogger logger;
-    private final Convert convert;
 
     private final ObjectMapper<Item> mapper;
 
@@ -42,13 +41,11 @@ public final class ItemRegistry {
     public ItemRegistry(
             final Path dataDirectory,
             final ConfigFactory configFactory,
-            final ComponentLogger logger,
-            final Convert convert
+            final ComponentLogger logger
     ) throws SerializationException {
         this.itemConfigDir = dataDirectory.resolve("items");
         this.configFactory = configFactory;
         this.logger = logger;
-        this.convert = convert;
 
         this.mapper = ObjectMapper.factory().get(Item.class);
         this.reloadItemConfig();
@@ -77,7 +74,7 @@ public final class ItemRegistry {
             final var root = loader.load();
             @Subst("key")
             var namespace = NamespacedKeyUtils.namespace();
-            final Item config = this.convert.defaultItem(Key.key(namespace, fileName), itemStack);
+            final Item config = Convert.defaultItem(Key.key(namespace, fileName), itemStack);
 
             logger.info("{}", config);
 
@@ -171,7 +168,7 @@ public final class ItemRegistry {
         return this.item(Key.key(namespace, value));
     }
 
-    public Optional<Item> optionalItem(final ItemStack itemStack) {
+    public Optional<Item> optionalItem(final @Nullable ItemStack itemStack) {
         return Optional.ofNullable(this.toItem(itemStack));
     }
 

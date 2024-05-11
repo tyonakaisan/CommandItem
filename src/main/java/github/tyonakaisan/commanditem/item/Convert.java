@@ -40,7 +40,7 @@ public final class Convert {
         this.itemRegistry = itemRegistry;
     }
 
-    public Item defaultItem(final Key key, final ItemStack itemStack) {
+    public static Item defaultItem(final Key key, final ItemStack itemStack) {
         @Nullable Component metaDisplayName = itemStack.getItemMeta().displayName();
         var color = itemStack.getRarity() == ItemRarity.COMMON
                 ? ""
@@ -60,14 +60,14 @@ public final class Convert {
                 .map(text -> MiniMessage.miniMessage().serialize(text))
                 .toList();
 
-        return new Item(displayName, copyLore, itemStack, this.defaultAttributes(key), Map.of(Action.Item.LEFT_CLICK, List.of(this.defaultCommand())));
+        return new Item(displayName, copyLore, itemStack, defaultAttributes(key), Map.of(Action.Item.LEFT_CLICK, List.of(defaultCommand())));
     }
 
-    public Attributes defaultAttributes(final Key key) {
+    public static Attributes defaultAttributes(final Key key) {
         return new Attributes(key, true, true, false, "1", "0", Map.of(Action.Item.LEFT_CLICK, "1"));
     }
 
-    public Command defaultCommand() {
+    public static Command defaultCommand() {
         return new Command(Action.Command.COMMAND, List.of(), true, "1", "1", "0", "1");
     }
 
