@@ -8,6 +8,7 @@ import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -29,6 +30,7 @@ import java.util.stream.Stream;
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class ItemRegistry {
+
     private final Path itemConfigDir;
     private final ConfigFactory configFactory;
     private final ComponentLogger logger;
@@ -76,8 +78,6 @@ public final class ItemRegistry {
             var namespace = NamespacedKeyUtils.namespace();
             final Item config = Convert.defaultItem(Key.key(namespace, fileName), itemStack);
 
-            logger.info("{}", config);
-
             root.set(Item.class, config);
             loader.save(root);
 
@@ -104,6 +104,7 @@ public final class ItemRegistry {
                     .forEach(file -> {
                         final var fileName = file.getFileName().toString();
                         var loader = this.configFactory.configurationLoader(file);
+                        this.logger.info("Loading {}", fileName);
 
                         try {
                             final var loaded = loader.load();
@@ -124,6 +125,7 @@ public final class ItemRegistry {
         this.itemMap.put(key, value);
     }
 
+    @SuppressWarnings({"PatternValidation", "BooleanMethodIsAlwaysInverted"})
     public boolean isItem(final @Nullable ItemStack itemStack) {
         if (itemStack == null || !itemStack.hasItemMeta()) {
             return false;
@@ -176,8 +178,15 @@ public final class ItemRegistry {
         var itemStack = item.itemStack().clone();
 
         itemStack.editMeta(itemMeta -> {
-            itemMeta.displayName(item.displayName(player));
-            itemMeta.lore(item.lore(player));
+            var newDisplayName = item.displayName(player);
+            if (!newDisplayName.equals(Component.empty())) {
+                itemMeta.displayName(newDisplayName);
+            }
+
+            var newLore = item.lore(player);
+            if (!newLore.isEmpty()) {
+                itemMeta.lore(newLore);
+            }
 
             itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, item.attributes().key().value());
             itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);

@@ -5,6 +5,7 @@ import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.Item;
 import github.tyonakaisan.commanditem.item.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
+import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -52,7 +53,7 @@ public final class GiveCommand implements CommandItemCommand {
                 .senderType(CommandSender.class)
                 .required("player", MultiplePlayerSelectorParser.multiplePlayerSelectorParser())
                 .required("key",
-                        StringParser.greedyStringParser(),
+                        StringParser.stringParser(),
                         SuggestionProvider.blockingStrings((context, input) -> {
                             final Set<Key> allArgs = this.itemRegistry.keys();
                             return allArgs.stream()
@@ -63,25 +64,29 @@ public final class GiveCommand implements CommandItemCommand {
                 .handler(handler -> {
                     final var sender = handler.sender();
                     final Selector<Player> players = handler.get("player");
-                    final @Subst("value") String keyValue = handler.get("key");
-                    final var key = Key.key(keyValue);
+                    @Subst("value")
+                    String keyString = handler.get("key");
                     final var count = (int) handler.optional("count").orElse(1);
 
+                    if (!keyString.startsWith(NamespacedKeyUtils.namespace())) {
+                        keyString = NamespacedKeyUtils.namespace() + ":" + keyString;
+                    }
+
+                    final var key = Key.key(keyString);
+                    final @Nullable Item item = this.itemRegistry.item(key);
+                    if (item == null) {
+                        sender.sendMessage(this.messages.translatable(
+                                Messages.Style.ERROR,
+                                sender,
+                                "command.give.error.unknown_item",
+                                TagResolver.builder()
+                                        .tag("item", Tag.selfClosingInserting(Component.text(key.asString())))
+                                        .build()));
+                        return;
+                    }
+
                     players.values().forEach(player -> {
-                        @Nullable Item item = this.itemRegistry.item(key);
-
-                        if (item == null) {
-                            sender.sendMessage(this.messages.translatable(
-                                    Messages.Style.ERROR,
-                                    sender,
-                                    "command.give.error.unknown_item",
-                                    TagResolver.builder()
-                                            .tag("item", Tag.selfClosingInserting(Component.text(key.asString())))
-                                            .build()));
-                            return;
-                        }
-
-                        var itemStack = this.itemRegistry.toItemStack(item, player);
+                        final ItemStack itemStack = this.itemRegistry.toItemStack(item, player);
 
                         if (this.isMaxStackSize(player, itemStack, count)) {
                             return;

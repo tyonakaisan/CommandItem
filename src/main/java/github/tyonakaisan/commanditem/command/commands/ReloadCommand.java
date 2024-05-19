@@ -5,6 +5,9 @@ import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.tag.Tag;
+import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -44,6 +47,12 @@ public final class ReloadCommand implements CommandItemCommand {
                     
                     final var sender = handler.sender();
                     sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS, sender, "command.reload.success.reload"));
+                    sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
+                            sender,
+                            "command.reload.success.items",
+                            TagResolver.builder()
+                                    .tag("size", Tag.selfClosingInserting(Component.text(this.itemRegistry.items().size())))
+                                    .build()));
                 })
                 .build();
 

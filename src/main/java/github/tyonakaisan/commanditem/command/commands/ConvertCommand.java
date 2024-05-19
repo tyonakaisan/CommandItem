@@ -50,13 +50,13 @@ public final class ConvertCommand implements CommandItemCommand {
                 .required("id", StringParser.stringParser())
                 .handler(handler -> {
                     if (handler.sender() instanceof Player sender) {
-                        final String fileName = handler.get("id");
+                        final String id = handler.get("id");
                         final var item = sender.getInventory().getItemInMainHand();
                         final var allKey = this.itemRegistry.keys().stream()
                                 .map(Key::value)
                                 .toList();
 
-                        if (!NamespacedKeyUtils.checkKeyStringPattern(fileName)) {
+                        if (!NamespacedKeyUtils.checkKeyStringPattern(id)) {
                             sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.non_matching_character"));
                             return;
                         }
@@ -66,18 +66,18 @@ public final class ConvertCommand implements CommandItemCommand {
                             return;
                         }
 
-                        if (allKey.contains(fileName)) {
+                        if (allKey.contains(id)) {
                             sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.file_name_exists"));
                             return;
                         }
 
-                        this.itemRegistry.createItemConfig(fileName, item);
+                        this.itemRegistry.createItemConfig(id, item);
                         this.itemRegistry.reloadItemConfig();
                         sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
                                 sender,
                                 "command.convert.success.convert",
                                 TagResolver.builder()
-                                        .tag("file", Tag.selfClosingInserting(Component.text(fileName + ".conf")))
+                                        .tag("file", Tag.selfClosingInserting(Component.text(id + ".conf")))
                                         .build()));
 
                         sender.playSound(Sound.sound()

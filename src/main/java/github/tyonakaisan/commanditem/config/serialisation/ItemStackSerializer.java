@@ -32,6 +32,7 @@ public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
         this.logger = logger;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public ItemStack deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
         LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
@@ -58,6 +59,9 @@ public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
             node.node(DATA_VERSION).set(objSerializeMap.get(DATA_VERSION));
             node.node(MATERIAL_TYPE).set(objSerializeMap.get(MATERIAL_TYPE));
+
+            this.logger.debug("ItemStack: {}", obj);
+            this.logger.debug("serialize: {}", objSerializeMap);
 
             if (obj.hasItemMeta()) {
                 var metaNode = node.node(ITEM_META);

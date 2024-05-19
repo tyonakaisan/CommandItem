@@ -1,23 +1,18 @@
 package github.tyonakaisan.commanditem.config.serialisation;
 
-import com.destroystokyo.paper.profile.PlayerProfile;
-import com.destroystokyo.paper.profile.ProfileProperty;
 import com.google.inject.Inject;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
-import org.bukkit.Bukkit;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
-import org.codehaus.plexus.util.Base64;
 import org.spongepowered.configurate.ConfigurationNode;
 import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @DefaultQualifier(NonNull.class)
@@ -25,8 +20,6 @@ import java.util.*;
 public class ConfigurationSerializableSerializer implements TypeSerializer<ConfigurationSerializable> {
 
     private final ComponentLogger logger;
-
-    private static final String SKULL_TEXTURE = "skull-texture";
 
     @Inject
     public ConfigurationSerializableSerializer(
@@ -43,15 +36,7 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
             var key = entry.getKey().toString();
             var serializableNode = entry.getValue();
 
-            if (key.equals(SKULL_TEXTURE)) {
-                Optional.ofNullable(serializableNode.getString())
-                        .ifPresent(texture -> {
-                            var playerProfile = Bukkit.createProfile(UUID.randomUUID(), "commandItem");
-                            var playerProperty = new ProfileProperty("textures", texture);
-                            playerProfile.setProperty(playerProperty);
-                            deserializeMap.put("skull-owner", playerProfile);
-                        });
-            } else if (serializableNode.isMap()) {
+            if (serializableNode.isMap()) {
                 var serializableMap = serializableNode.childrenMap();
 
                 if (serializableMap.containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
@@ -98,38 +83,34 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                 deserializeMap.put(key, objects);
             } else {
                 Optional.ofNullable(serializableNode.raw())
-                                .ifPresent(objects -> deserializeMap.put(key, objects));
+                                .ifPresent(object -> deserializeMap.put(key, object));
             }
         }
-        return Objects.requireNonNull(ConfigurationSerialization.deserializeObject(deserializeMap));
+        this.logger.debug("map: {}", deserializeMap);
+        return Objects.requireNonNull(ConfigurationSerialization.deserializeObject(DeserializeMapFixer.start(deserializeMap)));
     }
 
     @Override
-    public void serialize(final Type type, @Nullable ConfigurationSerializable obj, final ConfigurationNode node) throws SerializationException {
+    public void serialize(final Type type, final @Nullable ConfigurationSerializable obj, final ConfigurationNode node) throws SerializationException {
         if (obj == null) {
             node.set(null);
         } else {
             node.node(ConfigurationSerialization.SERIALIZED_TYPE_KEY).set(ConfigurationSerialization.getAlias(obj.getClass()));
             obj.serialize().forEach((key, object) -> {
-                try {
-                    if (key.equals("skull-owner") && object instanceof PlayerProfile playerProfile) {
-                        String url = Objects.requireNonNull(playerProfile.getTextures().getSkin()).toString();
-                        byte[] encodeData = Base64.encodeBase64(String.format("{textures:{SKIN:{url:\"%s\"}}}", url).getBytes());
-                        String encodeString = new String(encodeData, StandardCharsets.UTF_8);
-                        node.node(SKULL_TEXTURE).set(encodeString);
-                        return;
-                    }
+                this.logger.debug("[?] key:{}, obj: {}, class: {}", key, object, object.getClass());
 
+                try {
                     if (object instanceof Collection<?> collections) {
                         // 空のリストがあるとスキップされてロードした時に読み込めなくなる対策
                         if (collections.isEmpty()) {
                             node.node(key).set(Collections.emptyList());
                         } else {
-                            collections.forEach(collection -> {
+                            collections.forEach(value -> {
                                 try {
-                                    node.node(key).appendListNode().set(collection);
+                                    this.logger.debug("[Collection] key:{}, obj: {}, class: {}", key, value, value.getClass());
+                                    node.node(key).appendListNode().set(value);
                                 } catch (SerializationException e) {
-                                    this.logger.error("", e);
+                                    this.logger.error(String.format("Collections %s: %s serialization failed.", key, value), e);
                                 }
                             });
                         }
@@ -140,32 +121,35 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                         map.forEach((mapKey, mapValue) -> {
                             if (mapValue instanceof Collection<?> collections1) {
                                 if (!collections1.isEmpty()) {
-                                    collections1.forEach(collection1 -> {
+                                    collections1.forEach(value -> {
                                         try {
-                                            node.node(key).node(mapKey).appendListNode().set(collection1);
+                                            this.logger.debug("[MapInCollection] key:{}, obj: {}, class: {}", key, value, value.getClass());
+                                            node.node(key).node(mapKey).appendListNode().set(value);
                                         } catch (SerializationException e) {
-                                            this.logger.error("", e);
+                                            this.logger.error(String.format("Map in collections %s:%s serialization failed.", key, map), e);
                                         }
                                     });
                                 } else {
                                     try {
                                         node.node(key).node(mapKey).set(Collections.emptyList());
                                     } catch (SerializationException e) {
-                                        this.logger.error("", e);
+                                        this.logger.error(String.format("Map in collections %s:%s serialization failed.", key, map), e);
                                     }
                                 }
                             } else {
                                 try {
+                                    this.logger.debug("[MapValue] key:{}, mapKey: {}, obj: {}, class: {}", key, mapKey, mapValue, mapValue.getClass());
                                     node.node(key).node(mapKey).set(mapValue);
                                 } catch (SerializationException e) {
-                                    this.logger.error("", e);
+                                    this.logger.error(String.format("Map value %s:%s serialization failed.", key, map), e);
                                 }
                             }
                         });
                         return;
                     }
 
-                    node.node(key).set(object);
+                    this.logger.debug("[Normal] key:{}, obj: {}, class: {}", key, object, object.getClass());
+                    node.node(key).set(object.getClass(), object);
                 } catch (SerializationException e) {
                     this.logger.error("", e);
                 }

@@ -10,7 +10,6 @@ import github.tyonakaisan.commanditem.command.commands.ConvertCommand;
 import github.tyonakaisan.commanditem.command.commands.GiveCommand;
 import github.tyonakaisan.commanditem.command.commands.ReloadCommand;
 import github.tyonakaisan.commanditem.listener.ItemUseListener;
-import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Listener;
@@ -21,43 +20,33 @@ import org.incendo.cloud.SenderMapper;
 import org.incendo.cloud.execution.ExecutionCoordinator;
 import org.incendo.cloud.paper.PaperCommandManager;
 
-import java.nio.file.Path;
-
 @DefaultQualifier(NonNull.class)
 public final class CommandItemModule extends AbstractModule {
-    private final ComponentLogger logger;
+
     private final CommandItem commandItem;
-    private final Path dataDirectory;
 
     CommandItemModule(
-            final CommandItem commandItem,
-            final Path dataDirectory,
-            final ComponentLogger logger
+            final CommandItem commandItem
     ) {
         this.commandItem = commandItem;
-        this.dataDirectory = dataDirectory;
-        this.logger = logger;
     }
 
     @Provides
     @Singleton
     public CommandManager<CommandSender> commandManager() {
-        final PaperCommandManager<CommandSender> commandManager;
-        commandManager = new PaperCommandManager<>(
+        final PaperCommandManager<CommandSender> commandManager = new PaperCommandManager<>(
                 this.commandItem,
                 ExecutionCoordinator.simpleCoordinator(),
                 SenderMapper.identity()
         );
-        commandManager.registerAsynchronousCompletions();
+        commandManager.registerBrigadier();
         return commandManager;
     }
 
     @Override
     public void configure() {
-        this.bind(ComponentLogger.class).toInstance(this.logger);
         this.bind(CommandItem.class).toInstance(this.commandItem);
         this.bind(Server.class).toInstance(this.commandItem.getServer());
-        this.bind(Path.class).toInstance(this.dataDirectory);
 
         this.configureListener();
         this.configureCommand();
