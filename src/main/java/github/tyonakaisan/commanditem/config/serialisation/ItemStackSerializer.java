@@ -35,13 +35,13 @@ public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
     @SuppressWarnings("deprecation")
     @Override
     public ItemStack deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
-        LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
+        final LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
 
         deserializeMap.put(DATA_VERSION, node.node(DATA_VERSION).getInt(Bukkit.getUnsafe().getDataVersion()));
         deserializeMap.put(MATERIAL_TYPE, Objects.requireNonNull(node.node(MATERIAL_TYPE).getString()));
         deserializeMap.put(AMOUNT, node.node(AMOUNT).getInt(1));
 
-        var metaNode = node.node(ITEM_META);
+        final var metaNode = node.node(ITEM_META);
 
         if (!metaNode.isNull()) {
             deserializeMap.put("meta", Objects.requireNonNull(metaNode.get(ConfigurationSerializable.class)));
@@ -55,7 +55,7 @@ public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
         if (obj == null) {
             node.set(null);
         } else {
-            Map<String, Object> objSerializeMap = obj.serialize();
+            final Map<String, Object> objSerializeMap = obj.serialize();
 
             node.node(DATA_VERSION).set(objSerializeMap.get(DATA_VERSION));
             node.node(MATERIAL_TYPE).set(objSerializeMap.get(MATERIAL_TYPE));
@@ -64,7 +64,7 @@ public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
             this.logger.debug("serialize: {}", objSerializeMap);
 
             if (obj.hasItemMeta()) {
-                var metaNode = node.node(ITEM_META);
+                final var metaNode = node.node(ITEM_META);
                 metaNode.set(ConfigurationSerializable.class, obj.getItemMeta());
             }
         }

@@ -2,6 +2,8 @@ package github.tyonakaisan.commanditem.item;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
+import github.tyonakaisan.commanditem.item.registry.WeightedRandom;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import github.tyonakaisan.commanditem.util.PlaceholderUtils;
 import net.kyori.adventure.key.Key;
@@ -138,13 +140,13 @@ public final class Convert {
     }
 
     public WeightedRandom<Command> weightedCommands(final Item item, final Player player, final Action.Item action) {
-        var weightedRandom = new WeightedRandom<Command>();
+        final var weightedRandom = new WeightedRandom<Command>();
         item.commands().get(action).forEach(command -> weightedRandom.add(command, command.runWeight(player)));
         return weightedRandom;
     }
 
     public int pickCommands(final Item item, final Player player, final Action.Item action) {
-        @Nullable String picks = item.attributes().pickCommands().get(action);
+        final @Nullable String picks = item.attributes().pickCommands().get(action);
         return picks != null
                 ? (int) PlaceholderUtils.calculate(player, picks)
                 : 0;

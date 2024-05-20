@@ -3,10 +3,18 @@ package github.tyonakaisan.commanditem.item;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.CommandItemProvider;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
+import github.tyonakaisan.commanditem.item.registry.CoolTimeManager;
+import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
+import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.inventory.EquipmentSlot;
@@ -16,6 +24,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 
 @DefaultQualifier(NonNull.class)
@@ -26,6 +35,7 @@ public final class CommandItemHandler {
     private final CoolTimeManager coolTimeManager;
     private final Convert convert;
     private final Messages messages;
+    private final ComponentLogger logger;
 
     @Inject
     public CommandItemHandler(
@@ -33,21 +43,23 @@ public final class CommandItemHandler {
             final ItemRegistry itemRegistry,
             final CoolTimeManager coolTimeManager,
             final Convert convert,
-            final Messages messages
-    ) {
+            final Messages messages,
+            final ComponentLogger logger
+            ) {
         this.configFactory = configFactory;
         this.itemRegistry = itemRegistry;
         this.coolTimeManager = coolTimeManager;
         this.convert = convert;
         this.messages = messages;
+        this.logger = logger;
     }
 
     public void itemUse(final @Nullable ItemStack itemStack, final Player player, final Action.Item action, final @Nullable EquipmentSlot hand, final Cancellable event) {
         final @Nullable Item item = this.itemRegistry.toItem(itemStack);
 
         if (item != null && itemStack != null) {
-            var key = item.attributes().key();
-            var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
+            final var key = item.attributes().key();
+            final var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
 
             if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key) && item.attributes().hideCoolTimeAnnounce()) {
                 this.sendCoolTimeMessage(itemStack, player, timeLeft);
@@ -73,7 +85,7 @@ public final class CommandItemHandler {
     }
 
     private void sendCoolTimeMessage(final ItemStack itemStack, final Player player, final Duration duration) {
-        var type = this.configFactory.primaryConfig().coolTime().coolTimeAlertType();
+        final var type = this.configFactory.primaryConfig().coolTime().coolTimeAlertType();
 
         switch (type) {
             case CHAT -> player.sendMessage(this.messages.translatable(
@@ -99,8 +111,8 @@ public final class CommandItemHandler {
             return;
         }
 
-        var max = this.convert.pickCommands(item, player, action);
-        var weightedCommands = this.convert.weightedCommands(item, player, action);
+        final var max = this.convert.pickCommands(item, player, action);
+        final var weightedCommands = this.convert.weightedCommands(item, player, action);
         if (weightedCommands.size() == 0 || max == 0 || item.attributes().maxUses(player) == 0) {
             return;
         }
@@ -109,7 +121,7 @@ public final class CommandItemHandler {
             item.commands().get(action).forEach(command -> this.repeatCommands(command, player));
         } else {
             for (int i = 0; i < max; i++) {
-                var command = weightedCommands.select();
+                final var command = weightedCommands.select();
                 this.repeatCommands(command, player);
             }
         }
@@ -120,9 +132,9 @@ public final class CommandItemHandler {
             return;
         }
 
-        var period = command.period(player);
-        var console = command.isConsole();
-        var commandItem = CommandItemProvider.instance();
+        final var period = command.period(player);
+        final var console = command.isConsole();
+        final var commandItem = CommandItemProvider.instance();
 
         // periodが-1以下の場合はfor文
         if (period <= -1) {
@@ -134,5 +146,95 @@ public final class CommandItemHandler {
         } else {
             new CommandTask(command, player, console).runTaskTimer(commandItem, command.delay(player), period);
         }
+    }
+
+    public void giveItem(final Collection<Player> targets, final Audience audience, final Key key, final int count) {
+        final @Nullable Item item = this.itemRegistry.item(key);
+        if (item == null) {
+            audience.sendMessage(this.messages.translatable(
+                    Messages.Style.ERROR,
+                    audience,
+                    "command.give.error.unknown_item",
+                    TagResolver.builder()
+                            .tag("item", Tag.selfClosingInserting(Component.text(key.asString())))
+                            .build()));
+            return;
+        }
+
+        targets.forEach(target -> {
+            final ItemStack itemStack = this.itemRegistry.toItemStack(item, target);
+
+            if (this.isMaxStackSize(audience, itemStack, count)) {
+                return;
+            }
+
+            this.addItem(target, itemStack, count, item.attributes().stackable());
+
+            // Logging to the console
+            if (!(audience instanceof ConsoleCommandSender)) {
+                this.logger.info("Gave {} {} to {}.", count, PlainTextComponentSerializer.plainText().serialize(itemStack.displayName()), target.displayName());
+            }
+
+            audience.sendMessage(this.messages.translatable(
+                    Messages.Style.INFO,
+                    audience,
+                    "command.give.info.give",
+                    TagResolver.builder()
+                            .tag("player", Tag.selfClosingInserting(target.displayName()))
+                            .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
+                            .tag("count", Tag.selfClosingInserting(Component.text(count)))
+                            .build()));
+            target.playSound(Sound.sound()
+                    .type(Key.key("minecraft:entity.item.pickup"))
+                    .volume(0.3f)
+                    .pitch(2f)
+                    .build());
+        });
+    }
+
+    private void addItem(final Player target, final ItemStack itemStack, final int count, final boolean stackable) {
+        final var maxStackSize = itemStack.getMaxStackSize();
+
+        if (!stackable || maxStackSize == 1) {
+            for (int i = 0; i < count; i++) {
+                target.getInventory().addItem(itemStack);
+            }
+        } else {
+            final var cloneItemStack = itemStack.clone();
+            final var fullStacks = count / maxStackSize;
+            final var remainder = count % maxStackSize;
+
+            if (fullStacks > 0) {
+                cloneItemStack.setAmount(maxStackSize);
+                for (int i = 0; i < fullStacks; i++) {
+                    target.getInventory().addItem(cloneItemStack);
+                }
+
+                if (remainder > 0) {
+                    cloneItemStack.setAmount(remainder);
+                    target.getInventory().addItem(cloneItemStack);
+                }
+            } else {
+                cloneItemStack.setAmount(count);
+                target.getInventory().addItem(cloneItemStack);
+            }
+        }
+    }
+
+    private boolean isMaxStackSize(final Audience audience, final ItemStack itemStack, final int count) {
+        final var maxReceive = itemStack.getMaxStackSize() * 36;
+
+        if (count > maxReceive) {
+            audience.sendMessage(this.messages.translatable(
+                    Messages.Style.ERROR,
+                    audience,
+                    "command.give.error.max_count",
+                    TagResolver.builder()
+                            .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
+                            .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
+                            .build()));
+            return true;
+        }
+        return false;
     }
 }

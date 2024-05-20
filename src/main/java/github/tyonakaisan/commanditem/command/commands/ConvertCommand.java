@@ -2,7 +2,7 @@ package github.tyonakaisan.commanditem.command.commands;
 
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.item.ItemRegistry;
+import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
@@ -14,6 +14,7 @@ import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.incendo.cloud.CommandManager;
@@ -49,48 +50,56 @@ public final class ConvertCommand implements CommandItemCommand {
                 .senderType(CommandSender.class)
                 .required("id", StringParser.stringParser())
                 .handler(handler -> {
-                    if (handler.sender() instanceof Player sender) {
+                    if (handler.sender() instanceof final Player sender) {
                         final String id = handler.get("id");
-                        final var item = sender.getInventory().getItemInMainHand();
-                        final var allKey = this.itemRegistry.keys().stream()
-                                .map(Key::value)
-                                .toList();
+                        final var itemStack = sender.getInventory().getItemInMainHand();
 
-                        if (!NamespacedKeyUtils.checkKeyStringPattern(id)) {
-                            sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.non_matching_character"));
-                            return;
+                        if (this.checkItemAndId(sender, itemStack, id)) {
+                            this.itemRegistry.createItemConfig(id, itemStack);
+                            this.itemRegistry.reloadItemConfig();
+
+                            sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
+                                    sender,
+                                    "command.convert.success.convert",
+                                    TagResolver.builder()
+                                            .tag("file", Tag.selfClosingInserting(Component.text(id + ".conf")))
+                                            .build()));
+
+                            sender.playSound(Sound.sound()
+                                    .type(Key.key("minecraft:block.anvil.use"))
+                                    .volume(0.25f)
+                                    .pitch(1.25f)
+                                    .build());
                         }
-
-                        if (item.getType() == Material.AIR || item.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
-                            sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.can_not_convert"));
-                            return;
-                        }
-
-                        if (allKey.contains(id)) {
-                            sender.sendMessage(this.messages.translatable(Messages.Style.ERROR, sender, "command.convert.error.file_name_exists"));
-                            return;
-                        }
-
-                        this.itemRegistry.createItemConfig(id, item);
-                        this.itemRegistry.reloadItemConfig();
-                        sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
-                                sender,
-                                "command.convert.success.convert",
-                                TagResolver.builder()
-                                        .tag("file", Tag.selfClosingInserting(Component.text(id + ".conf")))
-                                        .build()));
-
-                        sender.playSound(Sound.sound()
-                                .type(Key.key("minecraft:block.anvil.use"))
-                                .volume(0.25f)
-                                .pitch(1.25f)
-                                .build());
                     } else {
                         this.logger.warn("Not console commands.");
                     }
                 })
                 .build();
 
-        commandManager.command(command);
+        this.commandManager.command(command);
+    }
+
+    private boolean checkItemAndId(final Player player, final ItemStack itemStack, final String id) {
+        if (!NamespacedKeyUtils.checkKeyStringPattern(id)) {
+            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.non_matching_character"));
+            return false;
+        }
+
+        if (itemStack.getType() == Material.AIR || itemStack.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
+            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.can_not_convert"));
+            return false;
+        }
+
+        final var allKey = this.itemRegistry.keys().stream()
+                .map(Key::value)
+                .toList();
+
+        if (allKey.contains(id)) {
+            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.file_name_exists"));
+            return false;
+        }
+
+        return true;
     }
 }

@@ -17,7 +17,7 @@ public final class CoolTimeSettings {
             VANILLA: Vanilla specification alert (animation after use of ender pearls).
             CHAT: Send a message to chat.
             ACTION_BAR: Send a message to action bar""")
-    private AlertType coolTimeAlertType = AlertType.CHAT;
+    private AlertType coolTimeAlertType = AlertType.ACTION_BAR;
 
     public AlertType coolTimeAlertType() {
         return this.coolTimeAlertType;

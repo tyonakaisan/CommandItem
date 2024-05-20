@@ -8,6 +8,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 import java.nio.file.Path;
 
+@SuppressWarnings("UnstableApiUsage")
 @DefaultQualifier(NonNull.class)
 public final class BootstrapModule extends AbstractModule {
 

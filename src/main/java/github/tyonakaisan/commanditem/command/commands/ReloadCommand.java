@@ -3,7 +3,7 @@ package github.tyonakaisan.commanditem.command.commands;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
-import github.tyonakaisan.commanditem.item.ItemRegistry;
+import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.Tag;

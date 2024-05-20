@@ -27,27 +27,27 @@ public final class ItemUseListener implements Listener {
 
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
-        var player = event.getPlayer();
-        @Nullable ItemStack itemStack = event.getItem();
-        @Nullable EquipmentSlot equipmentSlot = event.getHand();
+        final var player = event.getPlayer();
+        final @Nullable ItemStack itemStack = event.getItem();
+        final @Nullable EquipmentSlot equipmentSlot = event.getHand();
 
         this.commandItemHandler.itemUse(itemStack, player, Action.Item.fromBukkitAction(event.getAction()), equipmentSlot, event);
     }
 
     @EventHandler
     public void onConsume(PlayerItemConsumeEvent event) {
-        var player = event.getPlayer();
-        var itemStack = event.getItem();
-        var equipmentSlot = event.getHand();
+        final var player = event.getPlayer();
+        final var itemStack = event.getItem();
+        final var equipmentSlot = event.getHand();
 
         this.commandItemHandler.itemUse(itemStack, player, Action.Item.CONSUME, equipmentSlot, event);
     }
 
     @EventHandler
     public void onPlace(BlockPlaceEvent event) {
-        var player = event.getPlayer();
-        var itemStack = event.getItemInHand();
-        var equipmentSlot = event.getHand();
+        final var player = event.getPlayer();
+        final var itemStack = event.getItemInHand();
+        final var equipmentSlot = event.getHand();
 
         this.commandItemHandler.itemUse(itemStack, player, Action.Item.PLACE, equipmentSlot, event);
     }

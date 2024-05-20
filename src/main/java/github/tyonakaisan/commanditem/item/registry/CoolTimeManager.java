@@ -1,4 +1,4 @@
-package github.tyonakaisan.commanditem.item;
+package github.tyonakaisan.commanditem.item.registry;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -35,12 +35,12 @@ public final class CoolTimeManager {
             return false;
         }
 
-        var oldestTime = this.getOldestCoolTime(uuid, key);
+        final var oldestTime = this.getOldestCoolTime(uuid, key);
 
         if (oldestTime.isPresent()) {
-            var instant = oldestTime.get().instant;
-            var key1 = oldestTime.get().key;
-            var now = Instant.now();
+            final var instant = oldestTime.get().instant;
+            final var key1 = oldestTime.get().key;
+            final var now = Instant.now();
 
             return now.isBefore(instant) && key1.equals(key);
         } else {
@@ -49,18 +49,18 @@ public final class CoolTimeManager {
     }
 
     public void removeAllCoolTime(final UUID uuid, final Key key) {
-        var removes = this.coolTimes.stream()
+        final var removes = this.coolTimes.stream()
                 .filter(coolTime -> this.hasCoolTime(uuid, key))
                 .toList();
         this.coolTimes.removeAll(removes);
     }
 
     public Duration getRemainingCoolTime(final UUID uuid, final Key key) {
-        var oldestTime = this.getOldestCoolTime(uuid, key);
+        final var oldestTime = this.getOldestCoolTime(uuid, key);
         if (oldestTime.isPresent()) {
-            var instant = oldestTime.get().instant;
-            var key1 = oldestTime.get().key;
-            var now = Instant.now();
+            final var instant = oldestTime.get().instant;
+            final var key1 = oldestTime.get().key;
+            final var now = Instant.now();
 
             return (now.isBefore(instant) && key1.equals(key))
                     ? Duration.between(now, instant)

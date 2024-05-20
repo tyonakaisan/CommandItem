@@ -31,31 +31,31 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
     // 汚い
     @Override
     public ConfigurationSerializable deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
-        LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
-        for (Map.Entry<Object, ? extends ConfigurationNode> entry : node.childrenMap().entrySet()) {
-            var key = entry.getKey().toString();
-            var serializableNode = entry.getValue();
+        final LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
+        for (final Map.Entry<Object, ? extends ConfigurationNode> entry : node.childrenMap().entrySet()) {
+            final var key = entry.getKey().toString();
+            final var serializableNode = entry.getValue();
 
             if (serializableNode.isMap()) {
-                var serializableMap = serializableNode.childrenMap();
+                final var serializableMap = serializableNode.childrenMap();
 
                 if (serializableMap.containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
                     Optional.ofNullable(serializableNode.get(ConfigurationSerializable.class))
                                     .ifPresent(object -> deserializeMap.put(key, object));
                 } else {
-                    LinkedHashMap<String, Object> mapInMap = new LinkedHashMap<>();
+                    final LinkedHashMap<String, Object> mapInMap = new LinkedHashMap<>();
 
                     for (Map.Entry<Object, ? extends ConfigurationNode> secondEntry : serializableMap.entrySet()) {
-                        var secondKey = secondEntry.getKey().toString();
-                        var secondSerializableNode = secondEntry.getValue();
+                        final var secondKey = secondEntry.getKey().toString();
+                        final var secondSerializableNode = secondEntry.getValue();
 
                         if (secondSerializableNode.isMap()) {
                             Optional.ofNullable(secondSerializableNode.get(ConfigurationSerializable.class))
                                             .ifPresent(object -> mapInMap.put(secondKey, object));
                         } else if (secondSerializableNode.isList()) {
-                            var objects = new ArrayList<>();
+                            final var objects = new ArrayList<>();
 
-                            for (ConfigurationNode listNode : secondSerializableNode.childrenList()) {
+                            for (final ConfigurationNode listNode : secondSerializableNode.childrenList()) {
                                 objects.add(listNode.get(ConfigurationSerializable.class));
                             }
 
@@ -70,7 +70,7 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
             } else if (serializableNode.isList()) {
                 var objects = new ArrayList<>();
 
-                for (ConfigurationNode listNode : serializableNode.childrenList()) {
+                for (final ConfigurationNode listNode : serializableNode.childrenList()) {
                     if (listNode.isMap() && listNode.childrenMap().containsKey(ConfigurationSerialization.SERIALIZED_TYPE_KEY)) {
                         objects.add(listNode.get(ConfigurationSerializable.class));
                     } else if (listNode.isMap() && listNode.childrenMap().containsKey("v")) {
@@ -100,7 +100,7 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                 this.logger.debug("[?] key:{}, obj: {}, class: {}", key, object, object.getClass());
 
                 try {
-                    if (object instanceof Collection<?> collections) {
+                    if (object instanceof final Collection<?> collections) {
                         // 空のリストがあるとスキップされてロードした時に読み込めなくなる対策
                         if (collections.isEmpty()) {
                             node.node(key).set(Collections.emptyList());
@@ -117,9 +117,9 @@ public class ConfigurationSerializableSerializer implements TypeSerializer<Confi
                         return;
                     }
 
-                    if (object instanceof Map<?, ?> map) {
+                    if (object instanceof final Map<?, ?> map) {
                         map.forEach((mapKey, mapValue) -> {
-                            if (mapValue instanceof Collection<?> collections1) {
+                            if (mapValue instanceof final Collection<?> collections1) {
                                 if (!collections1.isEmpty()) {
                                     collections1.forEach(value -> {
                                         try {
