@@ -26,6 +26,7 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -185,10 +186,12 @@ public final class ItemRegistry {
                 itemMeta.lore(newLore);
             }
 
-            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, item.attributes().key().value());
-            itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
+            final var pdc = itemMeta.getPersistentDataContainer();
+            pdc.set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, item.attributes().key().value());
+            pdc.set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
             if (!item.attributes().stackable()) {
-                itemMeta.getPersistentDataContainer().set(NamespacedKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
+                pdc.set(NamespacedKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
+                pdc.set(NamespacedKeyUtils.timestampKey(), PersistentDataType.LONG, Instant.now().toEpochMilli());
             }
         });
         return itemStack;
