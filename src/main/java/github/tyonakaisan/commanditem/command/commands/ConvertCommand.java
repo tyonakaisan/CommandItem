@@ -1,10 +1,15 @@
 package github.tyonakaisan.commanditem.command.commands;
 
 import com.google.inject.Inject;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
 import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
@@ -12,72 +17,69 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
-import org.incendo.cloud.CommandManager;
-import org.incendo.cloud.parser.standard.StringParser;
 
+import static io.papermc.paper.command.brigadier.Commands.argument;
+import static io.papermc.paper.command.brigadier.Commands.literal;
+
+@SuppressWarnings("UnstableApiUsage")
 @DefaultQualifier(NonNull.class)
 public final class ConvertCommand implements CommandItemCommand {
 
     private final ComponentLogger logger;
     private final Messages messages;
     private final ItemRegistry itemRegistry;
-    private final CommandManager<CommandSender> commandManager;
 
     @Inject
     public ConvertCommand(
             final ComponentLogger logger,
             final Messages messages,
-            final ItemRegistry itemRegistry,
-            final CommandManager<CommandSender> commandManager
+            final ItemRegistry itemRegistry
     ) {
         this.logger = logger;
         this.messages = messages;
         this.itemRegistry = itemRegistry;
-        this.commandManager = commandManager;
     }
 
-
     @Override
-    public void init() {
-        final var command = this.commandManager.commandBuilder("commanditem", "cmdi", "ci")
-                .literal("convert")
-                .permission("commanditem.command.convert")
-                .senderType(CommandSender.class)
-                .required("id", StringParser.stringParser())
-                .handler(handler -> {
-                    if (handler.sender() instanceof final Player sender) {
-                        final String id = handler.get("id");
-                        final var itemStack = sender.getInventory().getItemInMainHand();
+    public ArgumentBuilder<CommandSourceStack, ?> init() {
+        return literal("convert")
+                .requires(source -> source.getSender().hasPermission("commanditem.command.convert"))
+                .then(argument("id", StringArgumentType.string())
+                        .executes(this::execute)
+                );
+    }
 
-                        if (this.checkItemAndId(sender, itemStack, id)) {
-                            this.itemRegistry.createItemConfig(id, itemStack);
-                            this.itemRegistry.reloadItemConfig();
+    private int execute(final CommandContext<CommandSourceStack> context) {
+        if (context.getSource().getSender() instanceof final Player sender) {
+            final var id = context.getArgument("id", String.class);
+            final var itemStack = sender.getInventory().getItemInMainHand();
 
-                            sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
-                                    sender,
-                                    "command.convert.success.convert",
-                                    TagResolver.builder()
-                                            .tag("file", Tag.selfClosingInserting(Component.text(id + ".conf")))
-                                            .build()));
+            if (this.checkItemAndId(sender, itemStack, id)) {
+                this.itemRegistry.createItemConfig(id, itemStack);
+                this.itemRegistry.reloadItemConfig();
 
-                            sender.playSound(Sound.sound()
-                                    .type(Key.key("minecraft:block.anvil.use"))
-                                    .volume(0.25f)
-                                    .pitch(1.25f)
-                                    .build());
-                        }
-                    } else {
-                        this.logger.warn("Not console commands.");
-                    }
-                })
-                .build();
+                sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
+                        sender,
+                        "command.convert.success.convert",
+                        TagResolver.builder()
+                                .tag("file", Tag.selfClosingInserting(Component.text(id + ".conf")))
+                                .build()));
 
-        this.commandManager.command(command);
+                sender.playSound(Sound.sound()
+                        .type(Key.key("minecraft:block.anvil.use"))
+                        .volume(0.25f)
+                        .pitch(1.25f)
+                        .build());
+            }
+            return Command.SINGLE_SUCCESS;
+        } else {
+            this.logger.warn("Not console commands.");
+            return 0;
+        }
     }
 
     private boolean checkItemAndId(final Player player, final ItemStack itemStack, final String id) {
@@ -99,7 +101,6 @@ public final class ConvertCommand implements CommandItemCommand {
             player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.file_name_exists"));
             return false;
         }
-
         return true;
     }
 }
