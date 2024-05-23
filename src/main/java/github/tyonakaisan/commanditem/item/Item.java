@@ -21,11 +21,15 @@ public record Item(
         Map<Action.Item, List<Command>> commands
 ) {
     public Component displayName(final Player player) {
-        return PlaceholderUtils.getComponent(player, this.displayName);
+        return this.displayName.isEmpty()
+                ? Component.empty()
+                : PlaceholderUtils.getComponent(player, this.displayName);
     }
 
     public List<Component> lore(final Player player) {
-        return this.lore.stream()
+        return this.lore.isEmpty()
+                ? List.of()
+                : this.lore.stream()
                 .map(text -> PlaceholderUtils.getComponent(player, text))
                 .toList();
     }

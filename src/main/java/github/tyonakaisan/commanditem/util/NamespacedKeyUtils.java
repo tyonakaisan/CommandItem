@@ -17,6 +17,7 @@ public final class NamespacedKeyUtils {
     private static final NamespacedKey ID_KEY = new NamespacedKey(NAMESPACE, "id");
     private static final NamespacedKey USAGE_KEY = new NamespacedKey(NAMESPACE, "uses");
     private static final NamespacedKey UUID_KEY = new NamespacedKey(NAMESPACE, "uuid");
+    private static final NamespacedKey TIMESTAMP_KEY = new NamespacedKey(NAMESPACE, "timestamp");
 
     public static NamespacedKey idKey() {
         return ID_KEY;
@@ -28,6 +29,9 @@ public final class NamespacedKeyUtils {
 
     public static NamespacedKey uuidKey() {
         return UUID_KEY;
+    }
+    public static NamespacedKey timestampKey() {
+        return TIMESTAMP_KEY;
     }
 
     public static String namespace() {

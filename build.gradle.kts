@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("xyz.jpenilla.run-paper") version "2.2.4"
+    id("xyz.jpenilla.run-paper") version "2.3.0"
     id("net.minecrell.plugin-yml.paper") version "0.6.0"
 }
 
@@ -22,14 +22,14 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
 
     // Paper
-    compileOnly("io.papermc.paper", "paper-api", "1.20.4-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper", "paper-api", "1.20.6-R0.1-SNAPSHOT")
 
     // Command
-    paperLibrary("org.incendo", "cloud-paper", "2.0.0-beta.2")
+    paperLibrary("org.incendo", "cloud-paper", "2.0.0-beta.7")
 
     // Config
     implementation("org.spongepowered", "configurate-hocon", "4.2.0-SNAPSHOT")
-    implementation("net.kyori", "adventure-serializer-configurate4", "4.16.0")
+    implementation("net.kyori", "adventure-serializer-configurate4", "4.17.0")
 
     // Plugins
     compileOnly("me.clip", "placeholderapi", "2.11.5")
@@ -40,7 +40,7 @@ dependencies {
     paperLibrary("net.objecthunter", "exp4j", "0.4.8")
 }
 
-version = "1.4.0-SNAPSHOT"
+version = "1.5.0-SNAPSHOT"
 
 paper {
     val mainPackage = "github.tyonakaisan.commanditem"
@@ -72,17 +72,17 @@ tasks {
         // Spark
         url("https://ci.lucko.me/job/spark/409/artifact/spark-bukkit/build/libs/spark-1.10.64-bukkit.jar")
         // PlaceholderAPI
-        hangar("PlaceholderAPI", "2.11.5")
+        // hangar("PlaceholderAPI", "2.11.5")
         // MiniPlaceholders
         github("MiniPlaceholders", "MiniPlaceholders", "2.2.4", "MiniPlaceholders-Paper-2.2.4.jar")
-        github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
+        // github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
         github("MiniPlaceholders", "Player-Expansion", "1.2.0", "MiniPlaceholders-Player-Expansion-1.2.0.jar")
         github("MiniPlaceholders", "Expressions-Expansion", "1.2.0", "Expressions-Expansion-1.2.0.jar")
     }
 
     compileJava {
         this.options.encoding = Charsets.UTF_8.name()
-        options.release.set(17)
+        options.release.set(21)
     }
 
     shadowJar {
@@ -91,7 +91,7 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("1.20.4")
+        minecraftVersion("1.20.6")
 
         downloadPlugins {
             downloadPlugins.from(paperPlugins)
