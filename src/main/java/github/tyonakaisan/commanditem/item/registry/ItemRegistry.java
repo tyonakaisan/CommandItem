@@ -6,15 +6,12 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
-import github.tyonakaisan.commanditem.item.Convert;
+import github.tyonakaisan.commanditem.util.ItemUtils;
 import github.tyonakaisan.commanditem.item.Item;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -26,10 +23,11 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.Set;
 import java.util.stream.Stream;
 
+@SuppressWarnings("PatternValidation")
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class ItemRegistry {
@@ -79,7 +77,7 @@ public final class ItemRegistry {
             final var root = loader.load();
             @Subst("key")
             final var namespace = NamespacedKeyUtils.namespace();
-            final Item config = Convert.defaultItem(Key.key(namespace, fileName), itemStack);
+            final Item config = ItemUtils.defaultItem(Key.key(namespace, fileName), itemStack);
 
             root.set(Item.class, config);
             loader.save(root);
@@ -124,80 +122,7 @@ public final class ItemRegistry {
         }
     }
 
-    @SuppressWarnings({"PatternValidation", "BooleanMethodIsAlwaysInverted"})
-    public boolean isItem(final @Nullable ItemStack itemStack) {
-        if (itemStack == null || !itemStack.hasItemMeta()) {
-            return false;
-        }
-        final var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-
-        if (!pdc.has(NamespacedKeyUtils.idKey())) {
-            return false;
-        }
-        final var value = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.idKey(), PersistentDataType.STRING));
-
-        return this.keys().contains(Key.key(NamespacedKeyUtils.namespace(), value));
-    }
-
-    public boolean isMaxUsesExceeded(final @Nullable ItemStack itemStack, final Player player) {
-        if (!this.isItem(itemStack)) {
-            return false;
-        }
-
-        final @Nullable Item item = this.toItem(itemStack);
-        final var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        final var usageCounts = pdc.getOrDefault(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
-
-        if (item == null || item.attributes().maxUses(player) <= -1) {
-            return false;
-        }
-
-        return usageCounts > item.attributes().maxUses(player);
-    }
-
-    @SuppressWarnings("PatternValidation")
-    public @Nullable Item toItem(final @Nullable ItemStack itemStack) {
-        if (!this.isItem(itemStack)) {
-            return null;
-        }
-
-        final var pdc = itemStack.getItemMeta().getPersistentDataContainer();
-        final var namespace = NamespacedKeyUtils.namespace();
-        final var value = Objects.requireNonNull(pdc.get(NamespacedKeyUtils.idKey(), PersistentDataType.STRING));
-
-        return this.item(Key.key(namespace, value));
-    }
-
-    public Optional<Item> optionalItem(final @Nullable ItemStack itemStack) {
-        return Optional.ofNullable(this.toItem(itemStack));
-    }
-
-    public ItemStack toItemStack(final Item item, final Player player) {
-        var itemStack = item.itemStack().clone();
-
-        itemStack.editMeta(itemMeta -> {
-            final var newDisplayName = item.displayName(player);
-            if (!newDisplayName.equals(Component.empty())) {
-                itemMeta.displayName(newDisplayName);
-            }
-
-            final var newLore = item.lore(player);
-            if (!newLore.isEmpty()) {
-                itemMeta.lore(newLore);
-            }
-
-            final var pdc = itemMeta.getPersistentDataContainer();
-            pdc.set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, item.attributes().key().value());
-            pdc.set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
-            if (!item.attributes().stackable()) {
-                pdc.set(NamespacedKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
-                pdc.set(NamespacedKeyUtils.timestampKey(), PersistentDataType.LONG, Instant.now().toEpochMilli());
-            }
-        });
-        return itemStack;
-    }
-
-    private void register(final Key key, final Item value) {
+    public void register(final Key key, final Item value) {
         this.itemMap.put(key, value);
     }
 
