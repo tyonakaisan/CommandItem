@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@SuppressWarnings("PatternValidation")
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class ItemRegistry {
