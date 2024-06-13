@@ -24,9 +24,6 @@ dependencies {
     // Paper
     compileOnly("io.papermc.paper", "paper-api", "1.20.6-R0.1-SNAPSHOT")
 
-    // Command
-    paperLibrary("org.incendo", "cloud-paper", "2.0.0-beta.7")
-
     // Config
     implementation("org.spongepowered", "configurate-hocon", "4.2.0-SNAPSHOT")
     implementation("net.kyori", "adventure-serializer-configurate4", "4.17.0")
@@ -40,7 +37,7 @@ dependencies {
     paperLibrary("net.objecthunter", "exp4j", "0.4.8")
 }
 
-version = "1.5.0-SNAPSHOT"
+version = "1.5.1-SNAPSHOT"
 
 paper {
     val mainPackage = "github.tyonakaisan.commanditem"

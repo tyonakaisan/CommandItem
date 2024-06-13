@@ -56,12 +56,23 @@ public final class CommandItemHandler {
         this.logger = logger;
     }
 
+    public void canPlaceItem(final @Nullable ItemStack itemStack, final Cancellable event) {
+        final @Nullable Item item = this.itemManager.toItem(itemStack);
+        if (item != null && item.attributes().placeable()) {
+            event.setCancelled(true);
+        }
+    }
+
     public void itemUse(final @Nullable ItemStack itemStack, final Player player, final Action.Item action, final @Nullable EquipmentSlot hand, final Cancellable event) {
         final @Nullable Item item = this.itemManager.toItem(itemStack);
 
         if (item != null && itemStack != null && item.commands().containsKey(action)) {
             final var key = item.attributes().key();
             final var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
+
+            if (action.isPlaceCancellable()) {
+                event.setCancelled(!item.attributes().placeable());
+            }
 
             if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key)) {
                 this.sendCoolTimeMessage(item, player, timeLeft);
@@ -82,10 +93,6 @@ public final class CommandItemHandler {
                     this.coolTimeManager.removeAllCoolTime(player.getUniqueId(), key);
                     this.coolTimeManager.setCoolTime(player.getUniqueId(), key, Duration.ofSeconds(item.attributes().coolTime(player)));
                 }
-            }
-
-            if (!item.attributes().placeable()) {
-                event.setCancelled(true);
             }
         }
     }
