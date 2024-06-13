@@ -70,7 +70,7 @@ public final class ItemManager {
     }
 
     public ItemStack toItemStack(final Item item, final Player player) {
-        var itemStack = item.itemStack().clone();
+        var itemStack = item.rawItemStack().clone();
 
         itemStack.editMeta(itemMeta -> {
             final var newDisplayName = item.displayName(player);

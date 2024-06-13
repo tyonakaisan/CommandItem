@@ -119,7 +119,7 @@ public final class CommandItemHandler {
                     TagResolver.builder()
                             .tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1)))
                             .build()));
-            case VANILLA -> player.setCooldown(item.itemStack().getType(), (int) duration.toSeconds());
+            case VANILLA -> player.setCooldown(item.rawItemStack().getType(), (int) duration.toSeconds());
         }
     }
 

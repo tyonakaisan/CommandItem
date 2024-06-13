@@ -2,8 +2,6 @@ package github.tyonakaisan.commanditem.config.serialisation;
 
 import com.google.inject.Inject;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -13,41 +11,32 @@ import org.spongepowered.configurate.serialize.SerializationException;
 import org.spongepowered.configurate.serialize.TypeSerializer;
 
 import java.lang.reflect.Type;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.Base64;
 
 @DefaultQualifier(NonNull.class)
 public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
 
     private final ComponentLogger logger;
 
-    private static final String DATA_VERSION = "v";
-    private static final String MATERIAL_TYPE = "type";
-    private static final String AMOUNT = "amount";
-    private static final String ITEM_META = "item-meta";
-
     @Inject
-    public ItemStackSerializer(final ComponentLogger logger) {
+    public ItemStackSerializer(
+            final ComponentLogger logger
+    ) {
         this.logger = logger;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public ItemStack deserialize(final Type type, final ConfigurationNode node) throws SerializationException {
-        final LinkedHashMap<String, Object> deserializeMap = new LinkedHashMap<>();
+    public ItemStack deserialize(final Type type, final ConfigurationNode node) {
+        final var value = node.getString("");
 
-        deserializeMap.put(DATA_VERSION, node.node(DATA_VERSION).getInt(Bukkit.getUnsafe().getDataVersion()));
-        deserializeMap.put(MATERIAL_TYPE, Objects.requireNonNull(node.node(MATERIAL_TYPE).getString()));
-        deserializeMap.put(AMOUNT, node.node(AMOUNT).getInt(1));
-
-        final var metaNode = node.node(ITEM_META);
-
-        if (!metaNode.isNull()) {
-            deserializeMap.put("meta", Objects.requireNonNull(metaNode.get(ConfigurationSerializable.class)));
+        this.logger.debug("value: {}", value);
+        if (value.isEmpty()) {
+            return ItemStack.empty();
         }
 
-        return ItemStack.deserialize(deserializeMap);
+        final var decode = Base64.getDecoder().decode(value);
+        this.logger.debug("decode: {}", decode);
+        return ItemStack.deserializeBytes(decode);
     }
 
     @Override
@@ -55,18 +44,7 @@ public final class ItemStackSerializer implements TypeSerializer<ItemStack> {
         if (obj == null) {
             node.set(null);
         } else {
-            final Map<String, Object> objSerializeMap = obj.serialize();
-
-            node.node(DATA_VERSION).set(objSerializeMap.get(DATA_VERSION));
-            node.node(MATERIAL_TYPE).set(objSerializeMap.get(MATERIAL_TYPE));
-
-            this.logger.debug("ItemStack: {}", obj);
-            this.logger.debug("serialize: {}", objSerializeMap);
-
-            if (obj.hasItemMeta()) {
-                final var metaNode = node.node(ITEM_META);
-                metaNode.set(ConfigurationSerializable.class, obj.getItemMeta());
-            }
+            node.set(Base64.getEncoder().encodeToString(obj.serializeAsBytes()));
         }
     }
 }
