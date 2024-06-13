@@ -56,13 +56,6 @@ public final class CommandItemHandler {
         this.logger = logger;
     }
 
-    public void canPlaceItem(final @Nullable ItemStack itemStack, final Cancellable event) {
-        final @Nullable Item item = this.itemManager.toItem(itemStack);
-        if (item != null && item.attributes().placeable()) {
-            event.setCancelled(true);
-        }
-    }
-
     public void itemUse(final @Nullable ItemStack itemStack, final Player player, final Action.Item action, final @Nullable EquipmentSlot hand, final Cancellable event) {
         final @Nullable Item item = this.itemManager.toItem(itemStack);
 

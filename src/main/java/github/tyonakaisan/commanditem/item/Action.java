@@ -8,6 +8,7 @@ public final class Action {
 
     private Action() {}
 
+    @SuppressWarnings("unused")
     public enum Item {
         RIGHT_CLICK(true),
         LEFT_CLICK(false),
