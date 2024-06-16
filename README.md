@@ -3,54 +3,47 @@
 ## Example
 
 ```hocon:sample
-# Specifies the command to be executed from console
-by-console-commands {
-    "RIGHT_CLICK"=[
+# Rewrite if not empty
+display-name="<!italic><bold>キンキンのモカ・モーラ<!italic><bold><gray>(試供品)"
+# Rewrite if not empty
+lore=[]
+# Not readable & editable
+raw-item-stack="H4sIAAAAAAAA/+NiYGBm4HZJLEkMSy0qzszPY2Dg+8/BwJSZwiCWm5mXmlyUmFZilZGfl1oZn5RfUpKTyszAmpxfmlfCwMDAyMXAlZyfWwCUzSsp5mAQRehILi0uyc+Nz0vMTWWYVK2UlJ+TomRVUlSaqqOUWlFSlKhkFY0qmpyfk1+kZKWUXpRYqaSjlFmSmJOZrGSVlphTDJQtAWoCSmq8WLnsyb7ZTyc3airVxuJS9bhp7ePmzVCycd3j5kWPm1Y/bt4NYjTvedy8UqmWmUEaw625+SmpOfEpwKAAeo2JgQEANmD2URsBAAA="
+attributes {
+    key="command_item:moca_cola"
+    stackable=true
+    placeable=true
+    hide-cool-time-announce=false
+    max-uses="1"
+    cool-time="0"
+    pick-commands {
+        CONSUME="-1"
+    }
+}
+commands {
+    CONSUME=[
         {
-            action=COMMAND
+            type=FROZEN
             commands=[
-                "minecraft:give <player> gold_ingot",
-                "minecraft:give <player> iron_ingot"
+                "200"
             ]
-            delay=0
-            period=0
-            repeat=0
-            run-weight=1
+            is-console=true
+            repeat="1"
+            period="1"
+            delay="0"
+            run-weight="1"
         },
         {
-            action=MESSAGE
+            type=MESSAGE
             commands=[
-                "<gold>iine!"
+                "<b><aqua>キンキンだ！</b>"
             ]
-        },
-        {
-            action="BROAD_CAST"
-            commands=[
-                "<aqua>broadcast message!"
-            ]
+            is-console=true
+            repeat="1"
+            period="1"
+            delay="0"
+            run-weight="1"
         }
     ]
 }
-# Specifies the command to be executed from player
-by-player-commands {}
-# Item cool time
-cool-time=0
-# Item display name
-display-name="<lang:item.minecraft.honeycomb>"
-#                   ##### Experimental features ######
-# ##### DO NOT EDIT THE SECTIONS "v", "==", "meta-type", "PublicBukkitValues" #####
-# Some items may not convert correctly or may be missing data
-# If such a thing happens, it cannot be loaded file
-item-stack {
-    type=HONEYCOMB
-    v=3578
-}
-# ##### DO NOT EDIT THIS SECTION #####
-key="command_item:test"
-# Item lore
-lore=[]
-# The command can be executed as many times as specified in this field
-# Entering a number below -1 disable this feature
-max-uses=1
-placeable=true
-stackable=true
+
