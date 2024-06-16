@@ -3,6 +3,7 @@ package github.tyonakaisan.commanditem.listener;
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.item.Action;
 import github.tyonakaisan.commanditem.item.CommandItemHandler;
+import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -51,5 +52,14 @@ public final class ItemUseListener implements Listener {
         final var equipmentSlot = event.getHand();
 
         this.commandItemHandler.itemUse(itemStack, player, Action.Item.PLACE, equipmentSlot, event);
+    }
+
+    @EventHandler
+    public void onItemFrameInteract(PlayerItemFrameChangeEvent event) {
+        final var player = event.getPlayer();
+        final var itemStack = event.getItemStack();
+        final var action = event.getAction();
+
+        this.commandItemHandler.itemUse(itemStack, player, Action.Item.fromBukkitAction(action), null, event);
     }
 }
