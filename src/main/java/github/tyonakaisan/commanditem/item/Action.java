@@ -8,16 +8,27 @@ public final class Action {
 
     private Action() {}
 
+    @SuppressWarnings("unused")
     public enum Item {
-        RIGHT_CLICK,
-        LEFT_CLICK,
-        PHYSICAL,
-        CONSUME,
-        PLACE,
-        BREAK, // unsupported
-        DROP, // unsupported
-        ITEM_DAMAGE, // unsupported
-        ITEM_BREAK; // unsupported
+        RIGHT_CLICK(true),
+        LEFT_CLICK(false),
+        PHYSICAL(false),
+        CONSUME(false),
+        PLACE(true),
+        BREAK(false), // unsupported
+        DROP(false), // unsupported
+        ITEM_DAMAGE(false), // unsupported
+        ITEM_BREAK(false); // unsupported
+
+        private final boolean placeCancellable;
+
+        Item(final boolean placeCancellable) {
+            this.placeCancellable = placeCancellable;
+        }
+
+        public boolean isPlaceCancellable() {
+            return this.placeCancellable;
+        }
 
         public static Action.Item fromBukkitAction(final org.bukkit.event.block.Action action) {
             return switch (action) {
@@ -30,6 +41,7 @@ public final class Action {
 
     public enum Command {
         COMMAND,
+        FROZEN,
         MESSAGE,
         BROAD_CAST
     }

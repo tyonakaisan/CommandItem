@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Comment;
 
 import java.util.List;
 import java.util.Map;
@@ -14,9 +15,12 @@ import java.util.Map;
 @DefaultQualifier(NonNull.class)
 @ConfigSerializable
 public record Item(
+        @Comment("Rewrite if not empty")
         String displayName,
+        @Comment("Rewrite if not empty")
         List<String> lore,
-        ItemStack itemStack,
+        @Comment("Not readable & editable")
+        ItemStack rawItemStack,
         Attributes attributes,
         Map<Action.Item, List<Command>> commands
 ) {

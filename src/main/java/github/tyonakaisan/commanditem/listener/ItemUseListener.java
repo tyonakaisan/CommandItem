@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.item.Action;
 import github.tyonakaisan.commanditem.item.CommandItemHandler;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -25,7 +26,7 @@ public final class ItemUseListener implements Listener {
         this.commandItemHandler = commandItemHandler;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onInteract(PlayerInteractEvent event) {
         final var player = event.getPlayer();
         final @Nullable ItemStack itemStack = event.getItem();
@@ -43,7 +44,7 @@ public final class ItemUseListener implements Listener {
         this.commandItemHandler.itemUse(itemStack, player, Action.Item.CONSUME, equipmentSlot, event);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onPlace(BlockPlaceEvent event) {
         final var player = event.getPlayer();
         final var itemStack = event.getItemInHand();

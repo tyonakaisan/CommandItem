@@ -3,12 +3,10 @@ package github.tyonakaisan.commanditem.config;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.primary.PrimaryConfig;
-import github.tyonakaisan.commanditem.config.serialisation.ConfigurationSerializableSerializer;
 import github.tyonakaisan.commanditem.config.serialisation.ItemStackSerializer;
 import net.kyori.adventure.serializer.configurate4.ConfigurateComponentSerializer;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -32,7 +30,6 @@ public class ConfigFactory {
     private final ComponentLogger logger;
 
     private final ItemStackSerializer itemStackSerializer;
-    private final ConfigurationSerializableSerializer configurationSerializableSerializer;
 
     private @MonotonicNonNull PrimaryConfig primaryConfig;
 
@@ -40,13 +37,11 @@ public class ConfigFactory {
     public ConfigFactory(
             final Path dataDirectory,
             final ComponentLogger logger,
-            final ItemStackSerializer itemStackSerializer,
-            final ConfigurationSerializableSerializer configurationSerializableSerializer
+            final ItemStackSerializer itemStackSerializer
     ) {
         this.dataDirectory = dataDirectory;
         this.logger = logger;
         this.itemStackSerializer = itemStackSerializer;
-        this.configurationSerializableSerializer = configurationSerializableSerializer;
 
         this.reloadPrimaryConfig();
     }
@@ -84,7 +79,6 @@ public class ConfigFactory {
                                     .registerAll(miniMessageSerializer.serializers())
                                     .registerAll(componentSerializer.serializers())
                                     .register(ItemStack.class, this.itemStackSerializer)
-                                    .register(ConfigurationSerializable.class, this.configurationSerializableSerializer)
                     );
                 })
                 .path(file)

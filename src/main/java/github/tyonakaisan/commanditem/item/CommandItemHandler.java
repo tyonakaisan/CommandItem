@@ -63,6 +63,10 @@ public final class CommandItemHandler {
             final var key = item.attributes().key();
             final var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
 
+            if (action.isPlaceCancellable()) {
+                event.setCancelled(!item.attributes().placeable());
+            }
+
             if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key)) {
                 this.sendCoolTimeMessage(item, player, timeLeft);
                 event.setCancelled(true);
@@ -82,10 +86,6 @@ public final class CommandItemHandler {
                     this.coolTimeManager.removeAllCoolTime(player.getUniqueId(), key);
                     this.coolTimeManager.setCoolTime(player.getUniqueId(), key, Duration.ofSeconds(item.attributes().coolTime(player)));
                 }
-            }
-
-            if (!item.attributes().placeable()) {
-                event.setCancelled(true);
             }
         }
     }
@@ -112,7 +112,7 @@ public final class CommandItemHandler {
                     TagResolver.builder()
                             .tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1)))
                             .build()));
-            case VANILLA -> player.setCooldown(item.itemStack().getType(), (int) duration.toSeconds());
+            case VANILLA -> player.setCooldown(item.rawItemStack().getType(), (int) duration.toSeconds());
         }
     }
 
