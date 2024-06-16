@@ -39,6 +39,7 @@ public final class CommandTask extends BukkitRunnable {
                     CommandExecutor.executeByPlayer(this.command, this.player);
                 }
             }
+            case FROZEN -> CommandExecutor.executeFrozen(this.command, this.player);
             case MESSAGE -> CommandExecutor.executeMessage(this.command, this.player);
             case BROAD_CAST -> CommandExecutor.executeBroadCast(this.command, this.player);
         }

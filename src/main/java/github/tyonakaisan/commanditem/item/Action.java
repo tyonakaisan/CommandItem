@@ -41,6 +41,7 @@ public final class Action {
 
     public enum Command {
         COMMAND,
+        FROZEN,
         MESSAGE,
         BROAD_CAST
     }

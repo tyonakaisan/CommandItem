@@ -20,6 +20,19 @@ public final class CommandExecutor {
         command.commands(player).forEach(c -> executeByPlayer(c, player));
     }
 
+    public static void executeFrozen(final int ticks, final Player player) {
+        player.setFreezeTicks(ticks);
+    }
+
+    public static void executeFrozen(final Command command, final Player player) {
+        command.commands(player).forEach(c -> {
+            if (!c.matches("\\d+")) {
+                return;
+            }
+            executeFrozen(Integer.parseInt(c), player);
+        });
+    }
+
     public static void executeByConsole(final String command) {
         Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), command);
     }
