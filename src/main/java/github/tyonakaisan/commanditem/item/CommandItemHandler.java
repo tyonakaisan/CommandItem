@@ -64,7 +64,7 @@ public final class CommandItemHandler {
             final var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
 
             if (action.isCancellable()) {
-                event.setCancelled(!item.attributes().placeable());
+                event.setCancelled(!item.attributes().eventCancel());
             }
 
             if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key)) {
