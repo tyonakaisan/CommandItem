@@ -47,7 +47,7 @@ public final class CommandItemHandler {
             final CoolTimeManager coolTimeManager,
             final Messages messages,
             final ComponentLogger logger
-            ) {
+    ) {
         this.configFactory = configFactory;
         this.itemRegistry = itemRegistry;
         this.itemManager = itemManager;
@@ -63,8 +63,9 @@ public final class CommandItemHandler {
             final var key = item.attributes().key();
             final var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
 
-            if (action.isCancellable()) {
-                event.setCancelled(!item.attributes().eventCancel());
+            final var cancel = item.attributes().eventCancel();
+            if (action.isCancellable() && cancel) {
+                event.setCancelled(true);
             }
 
             if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key)) {
@@ -80,7 +81,7 @@ public final class CommandItemHandler {
 
             this.itemManager.setPlayerHandItem(itemStack, player, action, hand);
 
-            if (timeLeft.isZero() || timeLeft.isNegative()) {
+            if (!timeLeft.isPositive()) {
                 this.runRandomCommands(item, player, action);
                 if (!item.commands().getOrDefault(action, List.of()).isEmpty()) {
                     this.coolTimeManager.removeAllCoolTime(player.getUniqueId(), key);

@@ -29,7 +29,7 @@ public final class ItemUtils {
     }
 
     public static Attributes defaultAttributes(final Key key) {
-        return new Attributes(key, true, true, false, "1", "0", Map.of(Action.Item.LEFT_CLICK, "1"));
+        return new Attributes(key, true, false, false, "-1", "0", Map.of(Action.Item.LEFT_CLICK, "-1"));
     }
 
     public static Command defaultCommand() {

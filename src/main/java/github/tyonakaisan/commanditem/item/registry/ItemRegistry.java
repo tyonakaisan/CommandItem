@@ -6,8 +6,8 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
-import github.tyonakaisan.commanditem.util.ItemUtils;
 import github.tyonakaisan.commanditem.item.Item;
+import github.tyonakaisan.commanditem.util.ItemUtils;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
@@ -15,7 +15,6 @@ import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
-import org.intellij.lang.annotations.Subst;
 import org.spongepowered.configurate.ConfigurateException;
 import org.spongepowered.configurate.objectmapping.ObjectMapper;
 import org.spongepowered.configurate.serialize.SerializationException;
@@ -27,6 +26,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Stream;
 
+@SuppressWarnings("PatternValidation")
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class ItemRegistry {
@@ -59,7 +59,7 @@ public final class ItemRegistry {
         this.loadItemConfig();
     }
 
-    public void createItemConfig(@Subst("value") final String fileName, final ItemStack itemStack) {
+    public void createItemConfig(final String fileName, final ItemStack itemStack) {
         if (!Files.exists(this.itemConfigDir)) {
             try {
                 Files.createDirectories(this.itemConfigDir);
@@ -74,7 +74,6 @@ public final class ItemRegistry {
 
         try {
             final var root = loader.load();
-            @Subst("key")
             final var namespace = NamespacedKeyUtils.namespace();
             final Item config = ItemUtils.defaultItem(Key.key(namespace, fileName), itemStack);
 

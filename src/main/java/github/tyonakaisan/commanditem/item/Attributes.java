@@ -14,6 +14,7 @@ import java.util.Map;
 @ConfigSerializable
 public record Attributes(
         Key key,
+        @Comment("If true, the time of acquisition is recorded on the item")
         boolean stackable,
         @Comment("Cancel event before executing command")
         boolean eventCancel,

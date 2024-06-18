@@ -34,9 +34,17 @@ public final class ItemManager {
         this.itemRegistry = itemRegistry;
     }
 
+    public @Nullable Item toItem(final @Nullable ItemStack itemStack) {
+        if (!this.isItem(itemStack)) {
+            return null;
+        }
+
+        return this.itemRegistry.item(this.getId(itemStack));
+    }
+
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isItem(final @Nullable ItemStack itemStack) {
-        if (itemStack == null || !itemStack.hasItemMeta()) {
+        if (itemStack == null || itemStack.isEmpty() || !itemStack.hasItemMeta()) {
             return false;
         }
         final var pdc = itemStack.getItemMeta().getPersistentDataContainer();
@@ -59,14 +67,6 @@ public final class ItemManager {
         }
 
         return false;
-    }
-
-    public @Nullable Item toItem(final @Nullable ItemStack itemStack) {
-        if (!this.isItem(itemStack)) {
-            return null;
-        }
-
-        return this.itemRegistry.item(this.getId(itemStack));
     }
 
     public ItemStack toItemStack(final Item item, final Player player) {
@@ -100,13 +100,13 @@ public final class ItemManager {
         }
 
         if (equipmentSlot == EquipmentSlot.HAND) {
-            player.getInventory().setItemInMainHand(this.updateCounts(itemStack, player, action));
+            player.getInventory().setItemInMainHand(this.addUseCountsIfNeeded(itemStack, player, action));
         } else {
-            player.getInventory().setItemInOffHand(this.updateCounts(itemStack, player, action));
+            player.getInventory().setItemInOffHand(this.addUseCountsIfNeeded(itemStack, player, action));
         }
     }
 
-    private ItemStack updateCounts(final ItemStack itemStack, final Player player, final Action.Item action) {
+    private ItemStack addUseCountsIfNeeded(final ItemStack itemStack, final Player player, final Action.Item action) {
         final var cloneItemStack = itemStack.clone();
         final @Nullable Item item = this.toItem(cloneItemStack);
 
