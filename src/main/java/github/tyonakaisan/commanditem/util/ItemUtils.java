@@ -21,7 +21,8 @@ import java.util.Map;
 @DefaultQualifier(NonNull.class)
 public final class ItemUtils {
 
-    private ItemUtils() {}
+    private ItemUtils() {
+    }
 
     public static Item defaultItem(final Key key, final ItemStack itemStack) {
         return new Item(getDisplayName(itemStack), getLore(itemStack), itemStack, defaultAttributes(key), Map.of(Action.Item.LEFT_CLICK, List.of(defaultCommand())));
@@ -61,7 +62,7 @@ public final class ItemUtils {
     public static int picks(final Item item, final Player player, final Action.Item action) {
         final @Nullable String picks = item.attributes().pickCommands().get(action);
         return picks != null
-                ? (int) PlaceholderUtils.calculate(player, picks)
+                ? (int) PlaceholderParser.calculate(player, picks)
                 : 0;
     }
 }

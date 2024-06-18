@@ -1,6 +1,6 @@
 package github.tyonakaisan.commanditem.item;
 
-import github.tyonakaisan.commanditem.util.PlaceholderUtils;
+import github.tyonakaisan.commanditem.util.PlaceholderParser;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -27,14 +27,14 @@ public record Item(
     public Component displayName(final Player player) {
         return this.displayName.isEmpty()
                 ? Component.empty()
-                : PlaceholderUtils.getComponent(player, this.displayName);
+                : PlaceholderParser.component(player, this.displayName);
     }
 
     public List<Component> lore(final Player player) {
         return this.lore.isEmpty()
                 ? List.of()
                 : this.lore.stream()
-                .map(text -> PlaceholderUtils.getComponent(player, text))
+                .map(text -> PlaceholderParser.component(player, text))
                 .toList();
     }
 }

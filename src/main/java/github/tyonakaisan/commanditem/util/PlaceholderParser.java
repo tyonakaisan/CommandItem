@@ -15,36 +15,30 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
-public final class PlaceholderUtils {
+public final class PlaceholderParser {
 
-    private PlaceholderUtils() {
-        throw new AssertionError("Utility class");
-    }
+    private PlaceholderParser() {}
 
     private static final Component DEFAULT_COMPONENT = Component.empty()
             // .color(NamedTextColor.WHITE)
             .decoration(TextDecoration.ITALIC, false);
 
-    public static Component defaultComponent() {
-        return DEFAULT_COMPONENT;
-    }
-
-    public static String getPlainText(final Player player, final String string) {
+    public static String plainText(final Player player, final String string) {
         return PlainTextComponentSerializer.plainText()
                 .serialize(miniMessage(player)
-                        .deserialize(papiParserString(player, string)));
+                        .deserialize(placeholderApi(player, string)));
     }
 
-    public static Component getComponent(final Player player, final String string) {
-        return DEFAULT_COMPONENT.append(miniMessage(player).deserialize(papiParserString(player, string)));
+    public static Component component(final Player player, final String string) {
+        return DEFAULT_COMPONENT.append(miniMessage(player).deserialize(placeholderApi(player, string)));
     }
 
     public static double calculate(final Player player, final String expression) {
-        var exp = new ExpressionBuilder(getPlainText(player, expression)).build();
+        var exp = new ExpressionBuilder(plainText(player, expression)).build();
         return exp.evaluate();
     }
 
-    private static String papiParserString(final Player player, final String string) {
+    private static String placeholderApi(final Player player, final String string) {
         return CommandItem.papiLoaded() ? PlaceholderAPI.setPlaceholders(player, string) : string;
     }
 
