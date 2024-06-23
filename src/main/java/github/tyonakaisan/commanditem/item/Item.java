@@ -15,9 +15,9 @@ import java.util.Map;
 @DefaultQualifier(NonNull.class)
 @ConfigSerializable
 public record Item(
-        @Comment("Rewrite if not empty")
+        @Comment("Override original item name")
         String displayName,
-        @Comment("Rewrite if not empty")
+        @Comment("Override original item lore")
         List<String> lore,
         @Comment("Not readable & editable")
         ItemStack rawItemStack,
