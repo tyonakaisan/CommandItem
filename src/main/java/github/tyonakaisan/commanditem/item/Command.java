@@ -32,6 +32,12 @@ public record Command(
                 .toList();
     }
 
+    public List<Integer> intValues(final Player player) {
+        return this.commands.stream()
+                .map(text -> (int) PlaceholderParser.calculate(player, text))
+                .toList();
+    }
+
     public int repeat(final Player player) {
         return (int) PlaceholderParser.calculate(player, this.repeat);
     }

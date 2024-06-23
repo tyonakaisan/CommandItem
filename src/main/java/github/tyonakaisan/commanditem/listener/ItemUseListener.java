@@ -2,7 +2,7 @@ package github.tyonakaisan.commanditem.listener;
 
 import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.item.Action;
-import github.tyonakaisan.commanditem.item.CommandItemHandler;
+import github.tyonakaisan.commanditem.item.task.ItemHandler;
 import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -18,13 +18,14 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public final class ItemUseListener implements Listener {
-    private final CommandItemHandler commandItemHandler;
+
+    private final ItemHandler itemHandler;
 
     @Inject
     public ItemUseListener(
-            final CommandItemHandler commandItemHandler
+            final ItemHandler itemHandler
     ) {
-        this.commandItemHandler = commandItemHandler;
+        this.itemHandler = itemHandler;
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -33,7 +34,7 @@ public final class ItemUseListener implements Listener {
         final @Nullable ItemStack itemStack = event.getItem();
         final @Nullable EquipmentSlot equipmentSlot = event.getHand();
 
-        this.commandItemHandler.itemUse(itemStack, player, Action.Item.fromBukkitAction(event.getAction()), equipmentSlot, event);
+        this.itemHandler.itemUseFromHand(itemStack, player, Action.Item.fromBukkitAction(event.getAction()), equipmentSlot, event);
     }
 
     @EventHandler
@@ -42,7 +43,7 @@ public final class ItemUseListener implements Listener {
         final var itemStack = event.getItem();
         final var equipmentSlot = event.getHand();
 
-        this.commandItemHandler.itemUse(itemStack, player, Action.Item.CONSUME, equipmentSlot, event);
+        this.itemHandler.itemUseFromHand(itemStack, player, Action.Item.CONSUME, equipmentSlot, event);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -51,7 +52,7 @@ public final class ItemUseListener implements Listener {
         final var itemStack = event.getItemInHand();
         final var equipmentSlot = event.getHand();
 
-        this.commandItemHandler.itemUse(itemStack, player, Action.Item.PLACE, equipmentSlot, event);
+        this.itemHandler.itemUseFromHand(itemStack, player, Action.Item.PLACE, equipmentSlot, event);
     }
 
     @EventHandler
@@ -60,6 +61,7 @@ public final class ItemUseListener implements Listener {
         final var itemStack = event.getItemStack();
         final var action = event.getAction();
 
-        this.commandItemHandler.itemUse(itemStack, player, Action.Item.fromBukkitAction(action), null, event);
+        // TODO FrameItemに対応させる
+        this.itemHandler.itemUseFromFrame(itemStack, player, Action.Item.fromFrameAction(action), event);
     }
 }

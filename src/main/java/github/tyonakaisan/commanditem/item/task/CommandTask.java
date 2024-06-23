@@ -1,5 +1,6 @@
-package github.tyonakaisan.commanditem.item;
+package github.tyonakaisan.commanditem.item.task;
 
+import github.tyonakaisan.commanditem.item.Command;
 import github.tyonakaisan.commanditem.util.CommandExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -10,19 +11,16 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 public final class CommandTask extends BukkitRunnable {
     private final Command command;
     private final Player player;
-    private final boolean console;
     private final int repeatCounts;
 
     private int count;
 
     public CommandTask(
             final Command command,
-            final Player player,
-            final boolean console
+            final Player player
     ) {
         this.command = command;
         this.player = player;
-        this.console = console;
 
         this.repeatCounts = Math.min(command.repeat(player), 100);
     }
@@ -33,7 +31,7 @@ public final class CommandTask extends BukkitRunnable {
 
         switch (this.command.type()) {
             case COMMAND -> {
-                if (this.console) {
+                if (this.command.isConsole()) {
                     CommandExecutor.executeByConsole(this.command, this.player);
                 } else {
                     CommandExecutor.executeByPlayer(this.command, this.player);

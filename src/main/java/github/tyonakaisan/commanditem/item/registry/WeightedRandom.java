@@ -9,6 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @DefaultQualifier(NonNull.class)
 public final class WeightedRandom<T> {
+
     private final NavigableMap<Double, T> map = new TreeMap<>();
     private double total = 0;
 

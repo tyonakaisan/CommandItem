@@ -25,8 +25,7 @@ public final class PlaceholderParser {
 
     public static String plainText(final Player player, final String string) {
         return PlainTextComponentSerializer.plainText()
-                .serialize(miniMessage(player)
-                        .deserialize(placeholderApi(player, string)));
+                .serialize(miniMessage(player).deserialize(placeholderApi(player, string)));
     }
 
     public static Component component(final Player player, final String string) {
@@ -39,7 +38,9 @@ public final class PlaceholderParser {
     }
 
     private static String placeholderApi(final Player player, final String string) {
-        return CommandItem.papiLoaded() ? PlaceholderAPI.setPlaceholders(player, string) : string;
+        return CommandItem.papiLoaded() && PlaceholderAPI.containsPlaceholders(string)
+                ? PlaceholderAPI.setPlaceholders(player, string)
+                : string;
     }
 
     private static MiniMessage miniMessage(final Player player) {

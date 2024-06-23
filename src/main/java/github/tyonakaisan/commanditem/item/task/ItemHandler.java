@@ -1,13 +1,15 @@
-package github.tyonakaisan.commanditem.item;
+package github.tyonakaisan.commanditem.item.task;
 
 import com.google.inject.Inject;
-import github.tyonakaisan.commanditem.CommandItemProvider;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
+import github.tyonakaisan.commanditem.item.Action;
+import github.tyonakaisan.commanditem.item.Item;
 import github.tyonakaisan.commanditem.item.registry.CoolTimeManager;
 import github.tyonakaisan.commanditem.item.registry.ItemManager;
 import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
-import github.tyonakaisan.commanditem.util.ItemUtils;
+import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
+import io.papermc.paper.event.player.PlayerItemFrameChangeEvent;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
@@ -21,6 +23,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -30,8 +33,9 @@ import java.util.Collection;
 import java.util.List;
 
 @DefaultQualifier(NonNull.class)
-public final class CommandItemHandler {
+public final class ItemHandler {
 
+    private final CommandHandler commandHandler;
     private final ConfigFactory configFactory;
     private final ItemRegistry itemRegistry;
     private final ItemManager itemManager;
@@ -40,7 +44,8 @@ public final class CommandItemHandler {
     private final ComponentLogger logger;
 
     @Inject
-    public CommandItemHandler(
+    public ItemHandler(
+            final CommandHandler commandHandler,
             final ConfigFactory configFactory,
             final ItemRegistry itemRegistry,
             final ItemManager itemManager,
@@ -48,6 +53,7 @@ public final class CommandItemHandler {
             final Messages messages,
             final ComponentLogger logger
     ) {
+        this.commandHandler = commandHandler;
         this.configFactory = configFactory;
         this.itemRegistry = itemRegistry;
         this.itemManager = itemManager;
@@ -56,10 +62,30 @@ public final class CommandItemHandler {
         this.logger = logger;
     }
 
-    public void itemUse(final @Nullable ItemStack itemStack, final Player player, final Action.Item action, final @Nullable EquipmentSlot hand, final Cancellable event) {
+    public void itemUseFromFrame(final @Nullable ItemStack itemStack, final Player player, final Action.Item action, final PlayerItemFrameChangeEvent event) {
+        if (itemStack == null) {
+            return;
+        }
+
+        if (this.itemUse(itemStack, player, action, event)) {
+            event.setItemStack(this.addUseCountsIfNeeded(itemStack, player, action));
+        }
+    }
+
+    public void itemUseFromHand(final @Nullable ItemStack itemStack, final Player player, final Action.Item action, final @Nullable EquipmentSlot hand, final Cancellable event) {
+        if (itemStack == null) {
+            return;
+        }
+
+        if (this.itemUse(itemStack, player, action, event)) {
+            this.setPlayerHandItem(itemStack, player, action, hand);
+        }
+    }
+
+    private boolean itemUse(final ItemStack itemStack, final Player player, final Action.Item action, final Cancellable event) {
         final @Nullable Item item = this.itemManager.toItem(itemStack);
 
-        if (item != null && itemStack != null && item.commands().containsKey(action)) {
+        if (item != null && item.commands().containsKey(action)) {
             final var key = item.attributes().key();
             final var timeLeft = this.coolTimeManager.getRemainingCoolTime(player.getUniqueId(), key);
 
@@ -70,25 +96,28 @@ public final class CommandItemHandler {
 
             if (this.coolTimeManager.hasRemainingCoolTime(player.getUniqueId(), key)) {
                 this.sendCoolTimeMessage(item, player, timeLeft);
-                event.setCancelled(true);
-                return;
+                event.setCancelled(true); // Cancel an event to avoid consuming item
+                return false;
             }
 
             if (this.itemManager.isMaxUsesExceeded(itemStack, player)) {
                 player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "commanditem.error.max_uses_exceeded"));
-                return;
+                return false;
             }
-
-            this.itemManager.setPlayerHandItem(itemStack, player, action, hand);
 
             if (!timeLeft.isPositive()) {
-                this.runRandomCommands(item, player, action);
-                if (!item.commands().getOrDefault(action, List.of()).isEmpty()) {
-                    this.coolTimeManager.removeAllCoolTime(player.getUniqueId(), key);
-                    this.coolTimeManager.setCoolTime(player.getUniqueId(), key, Duration.ofSeconds(item.attributes().coolTime(player)));
+                if (item.commands().getOrDefault(action, List.of()).isEmpty()) {
+                    return false;
                 }
+
+                this.commandHandler.runCommands(item, player, action);
+                this.coolTimeManager.removeAllCoolTime(player.getUniqueId(), key);
+                this.coolTimeManager.setCoolTime(player.getUniqueId(), key, Duration.ofSeconds(item.attributes().coolTime(player)));
             }
+            return true;
         }
+
+        return false;
     }
 
     private void sendCoolTimeMessage(final Item item, final Player player, final Duration duration) {
@@ -117,49 +146,48 @@ public final class CommandItemHandler {
         }
     }
 
-    private void runRandomCommands(final Item item, final Player player, final Action.Item action) {
-        if (item.commands().getOrDefault(action, List.of()).isEmpty()) {
+    public void setPlayerHandItem(final ItemStack itemStack, final Player player, final Action.Item action, final @Nullable EquipmentSlot equipmentSlot) {
+        if (equipmentSlot == null) {
             return;
         }
 
-        final var picks = ItemUtils.picks(item, player, action);
-        final var weightedCommands = ItemUtils.weightedCommands(item, player, action);
-        if (weightedCommands.size() == 0 || picks == 0 || item.attributes().maxUses(player) == 0) {
-            return;
-        }
-
-        if (picks <= -1) {
-            item.commands().get(action).forEach(command -> this.repeatCommands(command, player));
+        if (equipmentSlot == EquipmentSlot.HAND) {
+            player.getInventory().setItemInMainHand(this.addUseCountsIfNeeded(itemStack, player, action));
         } else {
-            for (int i = 0; i < picks; i++) {
-                final var command = weightedCommands.select();
-                this.repeatCommands(command, player);
-            }
+            player.getInventory().setItemInOffHand(this.addUseCountsIfNeeded(itemStack, player, action));
         }
     }
 
-    private void repeatCommands(final Command command, final Player player) {
-        if (command.repeat(player) == 0) {
-            return;
+    public ItemStack addUseCountsIfNeeded(final ItemStack itemStack, final Player player, final Action.Item action) {
+        final var cloneItemStack = itemStack.clone();
+        final @Nullable Item item = this.itemManager.toItem(cloneItemStack);
+
+        if (item == null || item.attributes().maxUses(player) < 0 || !item.commands().containsKey(action)) {
+            return itemStack;
         }
 
-        final var period = command.period(player);
-        final var console = command.isConsole();
-        final var commandItem = CommandItemProvider.instance();
+        // return usage counts
+        final var oldCounts = this.itemManager.getUsagesOrDefault(cloneItemStack, Integer.MAX_VALUE);
+        final var newCounts = oldCounts + 1;
 
-        // periodが-1以下の場合はfor文
-        if (period <= -1) {
-            commandItem.getServer().getScheduler().runTaskLater(commandItem, () -> {
-                for (int i = 0; i < command.repeat(player); i++) {
-                    new CommandTask(command, player, console).run();
-                }
-            }, command.delay(player));
+        if (newCounts >= item.attributes().maxUses(player)) {
+            var reduceAmountItem = this.itemManager.toItemStack(item, player);
+            reduceAmountItem.setAmount(cloneItemStack.getAmount() - 1);
+
+            return cloneItemStack.getAmount() == 1
+                    ? ItemStack.empty()
+                    : reduceAmountItem;
         } else {
-            new CommandTask(command, player, console).runTaskTimer(commandItem, command.delay(player), period);
+            cloneItemStack.editMeta(meta -> meta.getPersistentDataContainer().set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, newCounts));
+            return cloneItemStack;
         }
     }
 
     public void giveItem(final Collection<Player> targets, final Audience audience, final Key key, final int count) {
+        this.giveItem(targets, audience, key, count, false);
+    }
+
+    public void giveItem(final Collection<Player> targets, final Audience audience, final Key key, final int count, final boolean raw) {
         final @Nullable Item item = this.itemRegistry.item(key);
         if (item == null) {
             audience.sendMessage(this.messages.translatable(
@@ -173,7 +201,9 @@ public final class CommandItemHandler {
         }
 
         targets.forEach(target -> {
-            final ItemStack itemStack = this.itemManager.toItemStack(item, target);
+            final var itemStack = raw
+                    ? item.rawItemStack()
+                    : this.itemManager.toItemStack(item, target);
 
             if (this.isMaxStackSize(audience, itemStack, count)) {
                 return;

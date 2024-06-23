@@ -2,7 +2,6 @@ package github.tyonakaisan.commanditem.command.commands;
 
 import com.google.inject.Inject;
 import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
@@ -10,13 +9,13 @@ import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
 import github.tyonakaisan.commanditem.message.Messages;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -48,17 +47,17 @@ public final class ConvertCommand implements CommandItemCommand {
     public ArgumentBuilder<CommandSourceStack, ?> init() {
         return literal("convert")
                 .requires(source -> source.getSender().hasPermission("commanditem.command.convert"))
-                .then(argument("id", StringArgumentType.string())
+                .then(argument("id", ArgumentTypes.key())
                         .executes(this::execute)
                 );
     }
 
     private int execute(final CommandContext<CommandSourceStack> context) {
         if (context.getSource().getSender() instanceof final Player sender) {
-            final var id = context.getArgument("id", String.class);
+            final var id = context.getArgument("id", Key.class);
             final var itemStack = sender.getInventory().getItemInMainHand();
 
-            if (this.checkItemAndId(sender, itemStack, id)) {
+            if (this.check(sender, itemStack, id)) {
                 this.itemRegistry.createItemConfig(id, itemStack);
                 this.itemRegistry.reloadItemConfig();
 
@@ -66,7 +65,7 @@ public final class ConvertCommand implements CommandItemCommand {
                         sender,
                         "command.convert.success.convert",
                         TagResolver.builder()
-                                .tag("file", Tag.selfClosingInserting(Component.text(id + ".conf")))
+                                .tag("file", Tag.selfClosingInserting(Component.text(id.value() + ".conf")))
                                 .build()));
 
                 sender.playSound(Sound.sound()
@@ -77,28 +76,21 @@ public final class ConvertCommand implements CommandItemCommand {
             }
             return Command.SINGLE_SUCCESS;
         } else {
-            this.logger.warn("Not console commands.");
+            this.logger.warn("This command can only be executed by player.");
             return 0;
         }
     }
 
-    private boolean checkItemAndId(final Player player, final ItemStack itemStack, final String id) {
-        if (!NamespacedKeyUtils.checkKeyStringPattern(id)) {
-            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.non_matching_character"));
-            return false;
-        }
-
-        if (itemStack.getType() == Material.AIR || itemStack.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
+    private boolean check(final Player player, final ItemStack itemStack, final Key id) {
+        if (itemStack.isEmpty() || itemStack.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
             player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.can_not_convert"));
             return false;
         }
 
-        final var allKey = this.itemRegistry.keys().stream()
-                .map(Key::value)
-                .toList();
+        final var stream = this.itemRegistry.keys().stream();
 
-        if (allKey.contains(id)) {
-            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.file_name_exists"));
+        if (stream.anyMatch(key -> key.equals(id))) {
+            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.item_id_exists"));
             return false;
         }
         return true;

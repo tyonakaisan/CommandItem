@@ -14,7 +14,7 @@ public final class Action {
         RIGHT_CLICK(true),
         LEFT_CLICK(false),
         PHYSICAL(false),
-        CONSUME(false),
+        CONSUME(true),
         PLACE(true),
         ITEM_FRAME_PLACE(false),
         ITEM_FRAME_REMOVE(false),
@@ -42,7 +42,7 @@ public final class Action {
             };
         }
 
-        public static Action.Item fromBukkitAction(final PlayerItemFrameChangeEvent.ItemFrameChangeAction action) {
+        public static Action.Item fromFrameAction(final PlayerItemFrameChangeEvent.ItemFrameChangeAction action) {
             return switch (action) {
                 case PLACE -> ITEM_FRAME_PLACE;
                 case REMOVE -> ITEM_FRAME_REMOVE;

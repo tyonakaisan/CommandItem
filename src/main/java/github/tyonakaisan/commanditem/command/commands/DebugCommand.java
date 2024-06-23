@@ -9,8 +9,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.item.task.ItemHandler;
 import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
+import github.tyonakaisan.commanditem.item.task.ItemHandler;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
@@ -25,27 +25,32 @@ import java.util.concurrent.CompletableFuture;
 import static io.papermc.paper.command.brigadier.Commands.argument;
 import static io.papermc.paper.command.brigadier.Commands.literal;
 
-
 @SuppressWarnings("UnstableApiUsage")
 @DefaultQualifier(NonNull.class)
-public final class GiveCommand implements CommandItemCommand {
+public final class DebugCommand implements CommandItemCommand {
 
     private final ItemRegistry itemRegistry;
     private final ItemHandler itemHandler;
 
     @Inject
-    public GiveCommand(
+    public DebugCommand(
             final ItemRegistry itemRegistry,
             final ItemHandler itemHandler
     ) {
-        this.itemRegistry = itemRegistry;
-        this.itemHandler = itemHandler;
+       this.itemRegistry = itemRegistry;
+       this.itemHandler = itemHandler;
     }
 
     @Override
     public ArgumentBuilder<CommandSourceStack, ?> init() {
-        return literal("give")
-                .requires(source -> source.getSender().hasPermission("commanditem.command.give"))
+        return literal("debug")
+                .requires(source -> source.getSender().hasPermission("commanditem.command.debug"))
+                .then(this.raw());
+    }
+
+    public ArgumentBuilder<CommandSourceStack, ?> raw() {
+        return literal("raw")
+                .requires(source -> source.getSender().hasPermission("commanditem.command.debug.raw"))
                 .then(argument("targets", ArgumentTypes.players())
                         .then(argument("item", ArgumentTypes.key())
                                 .suggests(this::suggest)
@@ -67,11 +72,11 @@ public final class GiveCommand implements CommandItemCommand {
         final var sender = context.getSource().getSender();
         final List<Player> targets = context.getArgument("targets", PlayerSelectorArgumentResolver.class).resolve(context.getSource());
         final var key = context.getArgument("item", Key.class);
-        final int count = context.getNodes().size() == 4
+        final int count = context.getNodes().size() == 5
                 ? context.getArgument("count", int.class)
                 : 1;
 
-        this.itemHandler.giveItem(targets, sender, key, count);
+        this.itemHandler.giveItem(targets, sender, key, count, true);
         return Command.SINGLE_SUCCESS;
     }
 }

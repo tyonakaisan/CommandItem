@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import github.tyonakaisan.commanditem.command.commands.ConvertCommand;
 import github.tyonakaisan.commanditem.command.commands.GiveCommand;
+import github.tyonakaisan.commanditem.command.commands.DebugCommand;
 import github.tyonakaisan.commanditem.command.commands.ReloadCommand;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;
@@ -24,6 +25,7 @@ public final class CommandFactory {
 
     private final ConvertCommand convertCommand;
     private final GiveCommand giveCommand;
+    private final DebugCommand debugCommand;
     private final ReloadCommand reloadCommand;
 
     private static final LiteralArgumentBuilder<CommandSourceStack> FIRST_LITERAL_ARGUMENT = Commands.literal("commanditem");
@@ -33,10 +35,12 @@ public final class CommandFactory {
     public CommandFactory(
             final ConvertCommand convertCommand,
             final GiveCommand giveCommand,
+            final DebugCommand debugCommand,
             final ReloadCommand reloadCommand
     ) {
         this.convertCommand = convertCommand;
         this.giveCommand = giveCommand;
+        this.debugCommand = debugCommand;
         this.reloadCommand = reloadCommand;
     }
 
@@ -63,6 +67,7 @@ public final class CommandFactory {
         return this.literal()
                 .then(this.convertCommand.init())
                 .then(this.giveCommand.init())
+                .then(this.debugCommand.init())
                 .then(this.reloadCommand.init())
                 .build();
 

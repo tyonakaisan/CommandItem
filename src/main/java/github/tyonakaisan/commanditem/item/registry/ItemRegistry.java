@@ -8,7 +8,6 @@ import com.google.inject.Singleton;
 import github.tyonakaisan.commanditem.config.ConfigFactory;
 import github.tyonakaisan.commanditem.item.Item;
 import github.tyonakaisan.commanditem.util.ItemUtils;
-import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import org.bukkit.inventory.ItemStack;
@@ -59,7 +58,7 @@ public final class ItemRegistry {
         this.loadItemConfig();
     }
 
-    public void createItemConfig(final String fileName, final ItemStack itemStack) {
+    public void createItemConfig(final Key key, final ItemStack itemStack) {
         if (!Files.exists(this.itemConfigDir)) {
             try {
                 Files.createDirectories(this.itemConfigDir);
@@ -69,19 +68,18 @@ public final class ItemRegistry {
             }
         }
 
+        final var fileName = key.value();
         final var file = this.itemConfigDir.resolve(fileName + ".conf");
         final var loader = this.configFactory.configurationLoader(file);
 
         try {
             final var root = loader.load();
-            final var namespace = NamespacedKeyUtils.namespace();
-            final Item config = ItemUtils.defaultItem(Key.key(namespace, fileName), itemStack);
+            final var config = ItemUtils.defaultItem(key, itemStack);
 
             root.set(Item.class, config);
             loader.save(root);
 
             this.logger.info("Successfully {}.conf file created!", fileName);
-
         } catch (final ConfigurateException exception) {
             this.logger.error("Failed to create item config.", exception);
         }

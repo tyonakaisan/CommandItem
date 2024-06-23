@@ -7,9 +7,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings("unused")
 public final class NamespacedKeyUtils {
 
-    private NamespacedKeyUtils() {
-
-    }
+    private NamespacedKeyUtils() {}
 
     private static final Pattern PATTERN = Pattern.compile("[a-z0-9_\\-.]+");
     private static final String NAMESPACE = "command_item";
@@ -22,11 +20,9 @@ public final class NamespacedKeyUtils {
     public static NamespacedKey idKey() {
         return ID_KEY;
     }
-
     public static NamespacedKey usageKey() {
         return USAGE_KEY;
     }
-
     public static NamespacedKey uuidKey() {
         return UUID_KEY;
     }
