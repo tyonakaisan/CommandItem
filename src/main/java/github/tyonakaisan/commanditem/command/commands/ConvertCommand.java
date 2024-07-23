@@ -15,7 +15,6 @@ import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.tag.Tag;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -29,17 +28,14 @@ import static io.papermc.paper.command.brigadier.Commands.literal;
 public final class ConvertCommand implements CommandItemCommand {
 
     private final ComponentLogger logger;
-    private final Messages messages;
     private final ItemRegistry itemRegistry;
 
     @Inject
     public ConvertCommand(
             final ComponentLogger logger,
-            final Messages messages,
             final ItemRegistry itemRegistry
     ) {
         this.logger = logger;
-        this.messages = messages;
         this.itemRegistry = itemRegistry;
     }
 
@@ -61,12 +57,8 @@ public final class ConvertCommand implements CommandItemCommand {
                 this.itemRegistry.createItemConfig(id, itemStack);
                 this.itemRegistry.reloadItemConfig();
 
-                sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
-                        sender,
-                        "command.convert.success.convert",
-                        TagResolver.builder()
-                                .tag("file", Tag.selfClosingInserting(Component.text(id.value() + ".conf")))
-                                .build()));
+                sender.sendMessage(Messages.translate("command.convert.success.convert", sender,
+                        resolver -> resolver.tag("file", Tag.selfClosingInserting(Component.text(id.value() + ".conf")))));
 
                 sender.playSound(Sound.sound()
                         .type(Key.key("minecraft:block.anvil.use"))
@@ -83,14 +75,14 @@ public final class ConvertCommand implements CommandItemCommand {
 
     private boolean check(final Player player, final ItemStack itemStack, final Key id) {
         if (itemStack.isEmpty() || itemStack.getItemMeta().getPersistentDataContainer().has(NamespacedKeyUtils.idKey())) {
-            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.can_not_convert"));
+            player.sendMessage(Messages.translate("command.convert.error.can_not_convert", player));
             return false;
         }
 
         final var stream = this.itemRegistry.keys().stream();
 
         if (stream.anyMatch(key -> key.equals(id))) {
-            player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "command.convert.error.item_id_exists"));
+            player.sendMessage(Messages.translate("command.convert.error.item_id_exists", player));
             return false;
         }
         return true;

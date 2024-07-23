@@ -10,7 +10,6 @@ import github.tyonakaisan.commanditem.message.Messages;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.tag.Tag;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import org.bukkit.command.CommandSender;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -46,13 +45,9 @@ public final class ReloadCommand implements CommandItemCommand {
                     this.itemRegistry.reloadItemConfig();
                     this.messages.reloadMessage();
 
-                    sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS, sender, "command.reload.success.reload"));
-                    sender.sendMessage(this.messages.translatable(Messages.Style.SUCCESS,
-                            sender,
-                            "command.reload.success.items",
-                            TagResolver.builder()
-                                    .tag("size", Tag.selfClosingInserting(Component.text(this.itemRegistry.items().size())))
-                                    .build()));
+                    sender.sendMessage(Messages.translate("command.reload.success.reload", sender));
+                    sender.sendMessage(Messages.translate("command.reload.success.items", sender,
+                            resolver -> resolver.tag("size", Tag.selfClosingInserting(Component.text(this.itemRegistry.items().size())))));
 
                     return Command.SINGLE_SUCCESS;
                 });

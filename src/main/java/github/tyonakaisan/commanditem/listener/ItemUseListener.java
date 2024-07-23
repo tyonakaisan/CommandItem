@@ -61,7 +61,6 @@ public final class ItemUseListener implements Listener {
         final var itemStack = event.getItemStack();
         final var action = event.getAction();
 
-        // TODO FrameItemに対応させる
         this.itemHandler.itemUseFromFrame(itemStack, player, Action.Item.fromFrameAction(action), event);
     }
 }

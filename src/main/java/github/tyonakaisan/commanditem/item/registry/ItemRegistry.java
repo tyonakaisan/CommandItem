@@ -25,7 +25,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@SuppressWarnings("PatternValidation")
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class ItemRegistry {
@@ -107,7 +106,8 @@ public final class ItemRegistry {
                             final var loaded = loader.load();
                             loader.save(loaded);
                             final var item = this.mapper.load(loaded);
-                            this.register(item.attributes().key(), item);
+
+                            this.itemMap.put(item.attributes().key(), item);
                         } catch (final ConfigurateException exception) {
                             this.logger.warn("Failed to load item '{}'", fileName, exception);
                         }
@@ -116,10 +116,6 @@ public final class ItemRegistry {
         } catch (final IOException e) {
             this.logger.error("Failed to load item.", e);
         }
-    }
-
-    public void register(final Key key, final Item value) {
-        this.itemMap.put(key, value);
     }
 
     public @NonNull Set<Key> keys() {

@@ -16,7 +16,6 @@ import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.tag.Tag;
-import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
@@ -101,7 +100,7 @@ public final class ItemHandler {
             }
 
             if (this.itemManager.isMaxUsesExceeded(itemStack, player)) {
-                player.sendMessage(this.messages.translatable(Messages.Style.ERROR, player, "commanditem.error.max_uses_exceeded"));
+                player.sendMessage(Messages.translate("commanditem.error.max_uses_exceeded", player));
                 return false;
             }
 
@@ -126,22 +125,12 @@ public final class ItemHandler {
         if (item.attributes().hideCoolTimeAnnounce()) {
             return;
         }
+        final var message = Messages.translate("cooltime.error.during_cool_time", player,
+                resolver -> resolver.tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1))));
 
         switch (type) {
-            case CHAT -> player.sendMessage(this.messages.translatable(
-                    Messages.Style.ERROR,
-                    player,
-                    "cooltime.error.during_cool_time",
-                    TagResolver.builder()
-                            .tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1)))
-                            .build()));
-            case ACTION_BAR -> player.sendActionBar(this.messages.translatable(
-                    Messages.Style.ERROR,
-                    player,
-                    "cooltime.error.during_cool_time",
-                    TagResolver.builder()
-                            .tag("time", Tag.selfClosingInserting(Component.text(duration.toSeconds() + 1)))
-                            .build()));
+            case CHAT -> player.sendMessage(message);
+            case ACTION_BAR -> player.sendActionBar(message);
             case VANILLA -> player.setCooldown(item.rawItemStack().getType(), (int) duration.toSeconds());
         }
     }
@@ -190,13 +179,8 @@ public final class ItemHandler {
     public void giveItem(final Collection<Player> targets, final Audience audience, final Key key, final int count, final boolean raw) {
         final @Nullable Item item = this.itemRegistry.item(key);
         if (item == null) {
-            audience.sendMessage(this.messages.translatable(
-                    Messages.Style.ERROR,
-                    audience,
-                    "command.give.error.unknown_item",
-                    TagResolver.builder()
-                            .tag("item", Tag.selfClosingInserting(Component.text(key.asString())))
-                            .build()));
+            audience.sendMessage(Messages.translate("command.give.error.unknown_item", audience,
+                    resolver -> resolver.tag("item", Tag.selfClosingInserting(Component.text(key.asString())))));
             return;
         }
 
@@ -216,15 +200,12 @@ public final class ItemHandler {
                 this.logger.info("Gave {} {} to {}.", count, PlainTextComponentSerializer.plainText().serialize(itemStack.displayName()), target.displayName());
             }
 
-            audience.sendMessage(this.messages.translatable(
-                    Messages.Style.INFO,
-                    audience,
-                    "command.give.info.give",
-                    TagResolver.builder()
-                            .tag("player", Tag.selfClosingInserting(target.displayName()))
-                            .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
-                            .tag("count", Tag.selfClosingInserting(Component.text(count)))
-                            .build()));
+            audience.sendMessage(Messages.translate("command.give.info.give", audience, resolver -> {
+                resolver.tag("player", Tag.selfClosingInserting(target.displayName()));
+                resolver.tag("item", Tag.selfClosingInserting(itemStack.displayName()));
+                resolver.tag("count", Tag.selfClosingInserting(Component.text(count)));
+            }));
+
             target.playSound(Sound.sound()
                     .type(Key.key("minecraft:entity.item.pickup"))
                     .volume(0.3f)
@@ -266,14 +247,10 @@ public final class ItemHandler {
         final var maxReceive = itemStack.getMaxStackSize() * 36;
 
         if (count > maxReceive) {
-            audience.sendMessage(this.messages.translatable(
-                    Messages.Style.ERROR,
-                    audience,
-                    "command.give.error.max_count",
-                    TagResolver.builder()
-                            .tag("max", Tag.selfClosingInserting(Component.text(maxReceive)))
-                            .tag("item", Tag.selfClosingInserting(itemStack.displayName()))
-                            .build()));
+            audience.sendMessage(Messages.translate("command.give.error.max_count", audience, resolver -> {
+                resolver.tag("max", Tag.selfClosingInserting(Component.text(maxReceive)));
+                resolver.tag("item", Tag.selfClosingInserting(itemStack.displayName()));
+            }));
             return true;
         }
         return false;

@@ -3,16 +3,18 @@ package github.tyonakaisan.commanditem.message;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.identity.Identity;
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.Tag;
 import net.kyori.adventure.text.minimessage.tag.resolver.TagResolver;
+import net.kyori.adventure.translation.GlobalTranslator;
+import net.kyori.adventure.translation.TranslationRegistry;
 import net.kyori.adventure.translation.Translator;
 import net.kyori.adventure.util.UTF8ResourceBundleControl;
-import org.bukkit.entity.Player;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
@@ -24,7 +26,9 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.MessageFormat;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,17 +36,21 @@ import java.util.stream.Stream;
 @DefaultQualifier(NonNull.class)
 @Singleton
 public final class Messages {
+
     private final ComponentLogger logger;
     private final Path messagesDir;
 
     private final Map<Locale, ResourceBundle> locales = new HashMap<>();
-    private final Map<Locale, String> supportedLocales = Map.of(
+    private final Map<Locale, String> defaultLocales = Map.of(
             Locale.JAPAN, "messages_ja_JP",
             Locale.US, "messages_en_US"
     );
     private final Pattern pattern = Pattern.compile("messages_(.+)\\.properties");
     private static final String BUNDLE = "locale.messages";
     private static final String PREFIX = "<white>[<gradient:#005aa7:#fffde4>CommandItem</gradient>]</white>";
+
+    private static final Key key = Key.key("command_item", "translation");
+    private TranslationRegistry registry = TranslationRegistry.create(key);
 
     @Inject
     public Messages(
@@ -51,6 +59,14 @@ public final class Messages {
     ) {
         this.logger = logger;
         this.messagesDir = dataDirectory.resolve("locale");
+
+        if (!Files.exists(this.messagesDir)) {
+            try {
+                Files.createDirectories(this.messagesDir);
+            } catch (final IOException e) {
+                this.logger.error(String.format("Failed to create directory %s", this.messagesDir), e);
+            }
+        }
 
         this.reloadMessage();
     }
@@ -61,14 +77,10 @@ public final class Messages {
         this.loadMessageFile();
     }
 
-    public void loadMessageFile() {
-        if (!Files.exists(this.messagesDir)) {
-            try {
-                Files.createDirectories(this.messagesDir);
-            } catch (final IOException e) {
-                this.logger.error(String.format("Failed to create directory %s", this.messagesDir), e);
-            }
-        }
+    private void loadMessageFile() {
+        // Create registry
+        GlobalTranslator.translator().removeSource(this.registry);
+        this.registry = TranslationRegistry.create(key);
 
         // Create supported locales
         this.createSupportedLocales(this.messagesDir);
@@ -81,17 +93,20 @@ public final class Messages {
             this.logger.error("Failed to load locales.", e);
         }
 
+        // Register translator
+        GlobalTranslator.translator().addSource(this.registry);
+
         this.logger.info("Successfully {} locales loaded! {}", this.locales.keySet().size(), this.locales.keySet());
     }
 
     private void createSupportedLocales(final Path path) {
-        for (final Map.Entry<Locale, String> localesEntry : this.supportedLocales.entrySet()) {
+        for (final Map.Entry<Locale, String> localesEntry : this.defaultLocales.entrySet()) {
             final var locale = localesEntry.getKey();
             final var fileName = localesEntry.getValue();
             final var localePath = path.resolve(fileName + ".properties");
 
             if (!Files.exists(localePath)) {
-                ResourceBundle bundle = ResourceBundle.getBundle("locale." + fileName, locale, UTF8ResourceBundleControl.get());
+                final var bundle = ResourceBundle.getBundle("locale." + fileName, locale, UTF8ResourceBundleControl.get());
                 this.createProperties(localePath, bundle);
             }
         }
@@ -110,12 +125,9 @@ public final class Messages {
         };
         try (final Writer outputStream = Files.newBufferedWriter(path)) {
             properties.putAll(bundle.keySet().stream()
-                    .collect(Collectors.toMap(
-                            key -> key,
-                            bundle::getString
-                    )));
+                    .collect(Collectors.toMap(key1 -> key1, bundle::getString)));
             properties.store(outputStream, null);
-            this.logger.info("successfully '{}' created!", path.getFileName());
+            this.logger.info("Successfully '{}' created!", path.getFileName());
         } catch (final IOException e) {
             this.logger.error("Failed to create '{}' locales.", bundle.getLocale(), e);
         }
@@ -136,72 +148,50 @@ public final class Messages {
 
     private void load(final Locale locale, final Path path) {
         try (final BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
-            this.locales.put(locale, new PropertyResourceBundle(reader));
+            final var bundle = new PropertyResourceBundle(reader);
+            this.locales.put(locale, bundle);
+            this.registry.registerAll(locale, bundle, false);
         } catch (final Exception e) {
             this.logger.error(String.format("Failed to load %s", path.getFileName()), e);
         }
     }
 
-    public Component translatable(final Style style, final Audience audience, @PropertyKey(resourceBundle = BUNDLE) final String key) {
-        return this.translatable(style, audience, key, TagResolver.empty());
+    // GlobalTranslator
+
+    /**
+     * Simple translation message that resolves prefix.
+     * @param key the key
+     * @param audience the audience
+     * @return the translatable message or key if message not found
+     */
+    public static Component translate(final @PropertyKey(resourceBundle = BUNDLE) String key, final Audience audience) {
+        return format(key, audience, TagResolver.empty());
     }
 
-    public Component translatable(final Style style, final Audience audience, @PropertyKey(resourceBundle = BUNDLE) final String key, final TagResolver tagResolver) {
-        var addPrefixTagResolver = TagResolver.builder()
+    /**
+     * Simple translation message with {@link TagResolver} including prefix.
+     * @param key the key
+     * @param audience the audience
+     * @param resolver the tagResolver
+     * @return the translatable message or key if message not found
+     */
+    public static Component translate(final @PropertyKey(resourceBundle = BUNDLE) String key, final Audience audience, final Consumer<TagResolver.Builder> resolver) {
+        final var tagResolver = TagResolver.builder();
+        resolver.accept(tagResolver);
+        return format(key, audience, tagResolver.build());
+    }
+
+    private static Component format(final @PropertyKey(resourceBundle = BUNDLE) String key, final Audience audience, final TagResolver tagResolver) {
+        final var withPrefixTagResolver = TagResolver.builder()
                 .tag("prefix", Tag.selfClosingInserting(MiniMessage.miniMessage().deserialize(PREFIX)))
                 .resolver(tagResolver)
                 .build();
-
-        return audience instanceof final Player player
-                ? this.forPlayer(style, player, key, addPrefixTagResolver)
-                : this.forAudience(style, key, addPrefixTagResolver);
-    }
-
-    private Component forPlayer(final Style style, final Player player, @PropertyKey(resourceBundle = BUNDLE) final String key, final TagResolver tagResolver) {
         final var component = Component.empty()
-                .color(TextColor.fromCSSHexString(style.hex()))
                 .decoration(TextDecoration.ITALIC, false);
-        final @Nullable ResourceBundle resource = this.locales.get(player.locale());
+        final @Nullable MessageFormat message = GlobalTranslator.translator().translate(key, audience.pointers().getOrDefault(Identity.LOCALE, Locale.US));
 
-        // localeはあるけどkeyがない場合
-        if (resource != null && !resource.keySet().contains(key)) {
-            return this.forAudience(style, key, tagResolver);
-        }
-
-        return resource != null
-                ? component.append(MiniMessage.miniMessage().deserialize(resource.getString(key), tagResolver))
-                : this.forAudience(style, key, tagResolver);
-    }
-
-    private Component forAudience(final Style style, @PropertyKey(resourceBundle = BUNDLE) final String key, final TagResolver tagResolver) {
-        final var component = Component.empty()
-                .color(TextColor.fromCSSHexString(style.hex()))
-                .decoration(TextDecoration.ITALIC, false);
-        final var resource = this.locales.get(Locale.US);
-
-        // keyがない場合
-        if (!resource.keySet().contains(key)) {
-            final var bundle = ResourceBundle.getBundle(BUNDLE, Locale.US, UTF8ResourceBundleControl.get());
-            this.logger.warn("Message retrieved from resource bundle because '{}' does not exist in messages.properties.", key);
-            return component.append(MiniMessage.miniMessage().deserialize("<hover:show_text:'<red>This message is taken from the resource bundle'>" + bundle.getString(key), tagResolver));
-        }
-
-        return component.append(MiniMessage.miniMessage().deserialize(resource.getString(key), tagResolver));
-    }
-
-    public enum Style {
-        SUCCESS("#59ffa4"),
-        ERROR("#ff4775"),
-        INFO("#ffffff");
-
-        private final String hex;
-
-        Style(final String hex) {
-            this.hex = hex;
-        }
-
-        public String hex() {
-            return this.hex;
-        }
+        return message != null
+                ? component.append(MiniMessage.miniMessage().deserialize(message.toPattern(), withPrefixTagResolver))
+                : component.append(Component.text(key));
     }
 }
