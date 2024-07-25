@@ -10,7 +10,8 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 @DefaultQualifier(NonNull.class)
 public final class CommandExecutor {
 
-    private CommandExecutor() {}
+    private CommandExecutor() {
+    }
 
     public static void executeByPlayer(final Command command, final Player player) {
         command.commands(player).forEach(c -> executeByPlayer(c, player));

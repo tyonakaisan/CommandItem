@@ -9,6 +9,7 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 
 @DefaultQualifier(NonNull.class)
 public final class CommandTask extends BukkitRunnable {
+
     private final Command command;
     private final Player player;
     private final int repeatCounts;

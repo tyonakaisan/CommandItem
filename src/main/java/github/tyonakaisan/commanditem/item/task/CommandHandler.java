@@ -16,7 +16,8 @@ import java.util.List;
 public final class CommandHandler {
 
     @Inject
-    public CommandHandler() {}
+    public CommandHandler() {
+    }
 
     public void runCommands(final Item item, final Player player, final Action.Item action) {
         final var commands = item.commands().getOrDefault(action, List.of());

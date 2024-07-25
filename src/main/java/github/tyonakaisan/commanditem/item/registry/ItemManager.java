@@ -4,16 +4,12 @@ import com.google.inject.Inject;
 import github.tyonakaisan.commanditem.item.Item;
 import github.tyonakaisan.commanditem.util.NamespacedKeyUtils;
 import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.framework.qual.DefaultQualifier;
-
-import java.time.Instant;
-import java.util.UUID;
 
 // ItemMetaを変える場合は必ずcloneすること
 @SuppressWarnings("PatternValidation")
@@ -60,31 +56,6 @@ public final class ItemManager {
         final var usageCounts = this.getUsagesOrDefault(itemStack, 0);
         final var max = item.attributes().maxUses(player);
         return max > -1 && usageCounts > max;
-    }
-
-    public ItemStack toItemStack(final Item item, final Player player) {
-        var itemStack = item.rawItemStack().clone();
-
-        itemStack.editMeta(itemMeta -> {
-            final var newDisplayName = item.displayName(player);
-            if (!newDisplayName.equals(Component.empty())) {
-                itemMeta.displayName(newDisplayName);
-            }
-
-            final var newLore = item.lore(player);
-            if (!newLore.isEmpty()) {
-                itemMeta.lore(newLore);
-            }
-
-            final var pdc = itemMeta.getPersistentDataContainer();
-            pdc.set(NamespacedKeyUtils.idKey(), PersistentDataType.STRING, item.attributes().key().asString());
-            pdc.set(NamespacedKeyUtils.usageKey(), PersistentDataType.INTEGER, 0);
-            if (!item.attributes().stackable()) {
-                pdc.set(NamespacedKeyUtils.uuidKey(), PersistentDataType.STRING, UUID.randomUUID().toString());
-                pdc.set(NamespacedKeyUtils.timestampKey(), PersistentDataType.LONG, Instant.now().toEpochMilli());
-            }
-        });
-        return itemStack;
     }
 
     public Key getId(final ItemStack itemStack) {

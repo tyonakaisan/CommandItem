@@ -2,6 +2,7 @@ package github.tyonakaisan.commanditem;
 
 import com.google.inject.*;
 import github.tyonakaisan.commanditem.command.CommandFactory;
+import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -15,12 +16,14 @@ import java.util.Set;
 public final class CommandItem extends JavaPlugin {
 
     private final Injector injector;
+    private final ItemRegistry itemRegistry;
 
     @Inject
     public CommandItem(
             final Injector bootstrapInjector
     ) {
         this.injector = bootstrapInjector.createChildInjector(new CommandItemModule(this));
+        this.itemRegistry = this.injector.getInstance(ItemRegistry.class);
 
         CommandItemProvider.register(this);
     }
@@ -29,7 +32,8 @@ public final class CommandItem extends JavaPlugin {
     public void onEnable() {
         // Plugin startup logic
 
-        final Set<Listener> listeners = this.injector.getInstance(Key.get(new TypeLiteral<>() {}));
+        final Set<Listener> listeners = this.injector.getInstance(Key.get(new TypeLiteral<>() {
+        }));
         listeners.forEach(listener -> this.getServer().getPluginManager().registerEvents(listener, this));
 
         this.injector.getInstance(CommandFactory.class).registerViaEnable(this);
@@ -46,5 +50,9 @@ public final class CommandItem extends JavaPlugin {
 
     public static boolean miniPlaceholdersLoaded() {
         return Bukkit.getPluginManager().isPluginEnabled("MiniPlaceholders");
+    }
+
+    public ItemRegistry itemRegistry() {
+        return this.itemRegistry;
     }
 }

@@ -39,7 +39,6 @@ public final class ItemHandler {
     private final ItemRegistry itemRegistry;
     private final ItemManager itemManager;
     private final CoolTimeManager coolTimeManager;
-    private final Messages messages;
     private final ComponentLogger logger;
 
     @Inject
@@ -49,7 +48,6 @@ public final class ItemHandler {
             final ItemRegistry itemRegistry,
             final ItemManager itemManager,
             final CoolTimeManager coolTimeManager,
-            final Messages messages,
             final ComponentLogger logger
     ) {
         this.commandHandler = commandHandler;
@@ -57,7 +55,6 @@ public final class ItemHandler {
         this.itemRegistry = itemRegistry;
         this.itemManager = itemManager;
         this.coolTimeManager = coolTimeManager;
-        this.messages = messages;
         this.logger = logger;
     }
 
@@ -160,7 +157,7 @@ public final class ItemHandler {
         final var newCounts = oldCounts + 1;
 
         if (newCounts >= item.attributes().maxUses(player)) {
-            var reduceAmountItem = this.itemManager.toItemStack(item, player);
+            var reduceAmountItem = item.asItemStack(player);
             reduceAmountItem.setAmount(cloneItemStack.getAmount() - 1);
 
             return cloneItemStack.getAmount() == 1
@@ -187,7 +184,7 @@ public final class ItemHandler {
         targets.forEach(target -> {
             final var itemStack = raw
                     ? item.rawItemStack()
-                    : this.itemManager.toItemStack(item, target);
+                    : item.asItemStack(target);
 
             if (this.isMaxStackSize(audience, itemStack, count)) {
                 return;

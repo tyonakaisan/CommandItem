@@ -17,10 +17,10 @@ import org.checkerframework.framework.qual.DefaultQualifier;
 @DefaultQualifier(NonNull.class)
 public final class PlaceholderParser {
 
-    private PlaceholderParser() {}
+    private PlaceholderParser() {
+    }
 
     private static final Component DEFAULT_COMPONENT = Component.empty()
-            // .color(NamedTextColor.WHITE)
             .decoration(TextDecoration.ITALIC, false);
 
     public static String plainText(final Player player, final String string) {
@@ -44,7 +44,7 @@ public final class PlaceholderParser {
     }
 
     private static MiniMessage miniMessage(final Player player) {
-        var tagResolver = TagResolver.builder();
+        final var tagResolver = TagResolver.builder();
 
         if (CommandItem.miniPlaceholdersLoaded()) {
             tagResolver.resolver(MiniPlaceholders.getGlobalPlaceholders());

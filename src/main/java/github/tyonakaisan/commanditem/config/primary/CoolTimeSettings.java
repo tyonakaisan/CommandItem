@@ -13,7 +13,7 @@ public final class CoolTimeSettings {
     @Comment("""
             Alert type during cool time.
             "vanilla" applies to all items of the same type.
-            
+                        
             VANILLA: Vanilla specification alert (animation after use of ender pearls).
             CHAT: Send a message to chat.
             ACTION_BAR: Send a message to action bar""")

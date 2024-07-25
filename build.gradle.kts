@@ -25,8 +25,8 @@ dependencies {
     compileOnly("io.papermc.paper", "paper-api", "1.20.6-R0.1-SNAPSHOT")
 
     // Config
-    implementation("org.spongepowered", "configurate-hocon", "4.2.0-SNAPSHOT")
-    implementation("net.kyori", "adventure-serializer-configurate4", "4.17.0")
+    paperLibrary("org.spongepowered", "configurate-hocon", "4.2.0-SNAPSHOT")
+    paperLibrary("net.kyori", "adventure-serializer-configurate4", "4.17.0")
 
     // Plugins
     compileOnly("me.clip", "placeholderapi", "2.11.5")
@@ -37,7 +37,7 @@ dependencies {
     paperLibrary("net.objecthunter", "exp4j", "0.4.8")
 }
 
-version = "1.6.0-SNAPSHOT"
+version = "1.7.0-SNAPSHOT"
 
 paper {
     val mainPackage = "github.tyonakaisan.commanditem"
@@ -66,8 +66,9 @@ tasks {
     val paperPlugins = runPaper.downloadPluginsSpec {
         // TabTps
         url("https://cdn.modrinth.com/data/cUhi3iB2/versions/QmxLremu/tabtps-spigot-1.3.21.jar")
+        github("jpenilla","TabTPS", "v1.3.24", "tabtps-spigot-1.3.24.jar")
         // Spark
-        url("https://ci.lucko.me/job/spark/430/artifact/spark-bukkit/build/libs/spark-1.10.85-bukkit.jar")
+        // url("https://ci.lucko.me/job/spark/430/artifact/spark-bukkit/build/libs/spark-1.10.85-bukkit.jar")
         // PlaceholderAPI
         // hangar("PlaceholderAPI", "2.11.5")
         // MiniPlaceholders
@@ -75,6 +76,7 @@ tasks {
         // github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
         github("MiniPlaceholders", "Player-Expansion", "1.2.0", "MiniPlaceholders-Player-Expansion-1.2.0.jar")
         github("MiniPlaceholders", "Expressions-Expansion", "1.2.0", "Expressions-Expansion-1.2.0.jar")
+        github("ViaVersion", "ViaVersion", "5.0.1", "ViaVersion-5.0.1.jar")
     }
 
     compileJava {

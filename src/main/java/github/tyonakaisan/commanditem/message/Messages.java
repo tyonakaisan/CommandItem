@@ -160,7 +160,8 @@ public final class Messages {
 
     /**
      * Simple translation message that resolves prefix.
-     * @param key the key
+     *
+     * @param key      the key
      * @param audience the audience
      * @return the translatable message or key if message not found
      */
@@ -170,7 +171,8 @@ public final class Messages {
 
     /**
      * Simple translation message with {@link TagResolver} including prefix.
-     * @param key the key
+     *
+     * @param key      the key
      * @param audience the audience
      * @param resolver the tagResolver
      * @return the translatable message or key if message not found
@@ -188,10 +190,11 @@ public final class Messages {
                 .build();
         final var component = Component.empty()
                 .decoration(TextDecoration.ITALIC, false);
-        final @Nullable MessageFormat message = GlobalTranslator.translator().translate(key, audience.pointers().getOrDefault(Identity.LOCALE, Locale.US));
+        final var locale = audience.pointers().getOrDefault(Identity.LOCALE, Locale.US);
+        final @Nullable MessageFormat message = GlobalTranslator.translator().translate(key, locale);
 
         return message != null
                 ? component.append(MiniMessage.miniMessage().deserialize(message.toPattern(), withPrefixTagResolver))
-                : component.append(Component.text(key));
+                : component.append(Component.translatable(key));
     }
 }
