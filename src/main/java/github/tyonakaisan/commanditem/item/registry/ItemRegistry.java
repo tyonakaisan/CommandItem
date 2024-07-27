@@ -100,7 +100,6 @@ public final class ItemRegistry {
                     .forEach(file -> {
                         final var fileName = file.getFileName().toString();
                         final var loader = this.configFactory.configurationLoader(file);
-                        this.logger.info("Loading {}", fileName);
 
                         try {
                             final var loaded = loader.load();
