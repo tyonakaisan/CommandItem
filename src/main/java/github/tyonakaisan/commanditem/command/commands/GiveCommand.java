@@ -2,6 +2,7 @@ package github.tyonakaisan.commanditem.command.commands;
 
 import com.google.inject.Inject;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -9,8 +10,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import github.tyonakaisan.commanditem.command.CommandItemCommand;
-import github.tyonakaisan.commanditem.item.task.ItemHandler;
 import github.tyonakaisan.commanditem.item.registry.ItemRegistry;
+import github.tyonakaisan.commanditem.item.task.ItemHandler;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.argument.ArgumentTypes;
 import io.papermc.paper.command.brigadier.argument.resolvers.selector.PlayerSelectorArgumentResolver;
@@ -51,8 +52,9 @@ public final class GiveCommand implements CommandItemCommand {
                                 .suggests(this::suggest)
                                 .executes(this::execute)
                                 .then(argument("count", IntegerArgumentType.integer())
-                                        .executes(this::execute)))
-                );
+                                        .executes(this::execute)
+                                        .then(argument("simple", BoolArgumentType.bool())
+                                                .executes(this::execute)))));
     }
 
     private CompletableFuture<Suggestions> suggest(final CommandContext<CommandSourceStack> context, final SuggestionsBuilder builder) {
@@ -67,11 +69,12 @@ public final class GiveCommand implements CommandItemCommand {
         final var sender = context.getSource().getSender();
         final List<Player> targets = context.getArgument("targets", PlayerSelectorArgumentResolver.class).resolve(context.getSource());
         final var key = context.getArgument("item", Key.class);
-        final int count = context.getNodes().size() == 4
+        final var count = context.getNodes().size() == 4
                 ? context.getArgument("count", int.class)
                 : 1;
+        final var simple = context.getNodes().size() == 5 && context.getArgument("simple", boolean.class);
 
-        this.itemHandler.giveItem(targets, sender, key, count);
+        this.itemHandler.giveItem(targets, sender, key, count, simple);
         return Command.SINGLE_SUCCESS;
     }
 }

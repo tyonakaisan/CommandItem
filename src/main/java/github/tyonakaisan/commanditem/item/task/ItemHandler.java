@@ -173,7 +173,7 @@ public final class ItemHandler {
         this.giveItem(targets, audience, key, count, false);
     }
 
-    public void giveItem(final Collection<Player> targets, final Audience audience, final Key key, final int count, final boolean raw) {
+    public void giveItem(final Collection<Player> targets, final Audience audience, final Key key, final int count, final boolean simple) {
         final @Nullable Item item = this.itemRegistry.item(key);
         if (item == null) {
             audience.sendMessage(Messages.translate("command.give.error.unknown_item", audience,
@@ -182,8 +182,8 @@ public final class ItemHandler {
         }
 
         targets.forEach(target -> {
-            final var itemStack = raw
-                    ? item.rawItemStack()
+            final var itemStack = simple
+                    ? item.asSimple(target)
                     : item.asItemStack(target);
 
             if (this.isMaxStackSize(audience, itemStack, count)) {
