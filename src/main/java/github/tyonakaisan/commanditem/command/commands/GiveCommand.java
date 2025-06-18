@@ -69,10 +69,10 @@ public final class GiveCommand implements CommandItemCommand {
         final var sender = context.getSource().getSender();
         final List<Player> targets = context.getArgument("targets", PlayerSelectorArgumentResolver.class).resolve(context.getSource());
         final var key = context.getArgument("item", Key.class);
-        final var count = context.getNodes().size() >= 4
+        final var count = context.getNodes().size() >= 5
                 ? context.getArgument("count", int.class)
                 : 1;
-        final var simple = context.getNodes().size() == 5 && context.getArgument("simple", boolean.class);
+        final var simple = context.getNodes().size() >= 6 && context.getArgument("simple", boolean.class);
 
         this.itemHandler.giveItem(targets, sender, key, count, simple);
         return Command.SINGLE_SUCCESS;

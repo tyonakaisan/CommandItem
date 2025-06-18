@@ -31,7 +31,7 @@ public class ConfigFactory {
 
     private final ItemStackSerializer itemStackSerializer;
 
-    private @MonotonicNonNull PrimaryConfig primaryConfig;
+    private @MonotonicNonNull PrimaryConfig primaryConfig = null;
 
     @Inject
     public ConfigFactory(
@@ -87,18 +87,16 @@ public class ConfigFactory {
 
     public <T> @Nullable T load(final Class<T> clazz, final String fileName) {
         final Path file = this.dataDirectory.resolve(fileName);
-
         if (!Files.exists(this.dataDirectory)) {
             try {
                 Files.createDirectories(this.dataDirectory);
-            } catch (final IOException e) {
-                this.logger.error(String.format("Failed to create parent directories for '%s'", file), e);
+            } catch (final IOException exception) {
+                this.logger.error("Failed to create parent directories for '{}'", file, exception);
                 return null;
             }
         }
 
         final var loader = this.configurationLoader(file);
-
         try {
             final var root = loader.load();
             final @Nullable T config = root.get(clazz);
@@ -111,7 +109,7 @@ public class ConfigFactory {
             this.logger.info("Successfully configuration file loaded!");
             return config;
         } catch (final ConfigurateException exception) {
-            exception.printStackTrace();
+            this.logger.error("Failed to load config '{}'", file, exception);
             return null;
         }
     }

@@ -6,12 +6,10 @@ plugins {
 }
 
 repositories {
-    mavenLocal()
     mavenCentral()
-    maven("https://oss.sonatype.org/content/repositories/snapshots/")
-
-    // Paper
+    maven("https://jitpack.io")
     maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
 
     // PlaceholderAPI
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
@@ -25,8 +23,8 @@ dependencies {
     compileOnly("io.papermc.paper", "paper-api", "1.20.6-R0.1-SNAPSHOT")
 
     // Config
-    paperLibrary("org.spongepowered", "configurate-hocon", "4.2.0-SNAPSHOT")
-    paperLibrary("net.kyori", "adventure-serializer-configurate4", "4.17.0")
+    paperLibrary("org.spongepowered", "configurate-hocon", "4.2.0")
+    paperLibrary("net.kyori", "adventure-serializer-configurate4", "4.21.0")
 
     // Plugins
     compileOnly("me.clip", "placeholderapi", "2.11.5")
@@ -64,19 +62,13 @@ paper {
 
 tasks {
     val paperPlugins = runPaper.downloadPluginsSpec {
-        // TabTps
-        url("https://cdn.modrinth.com/data/cUhi3iB2/versions/QmxLremu/tabtps-spigot-1.3.21.jar")
-        github("jpenilla","TabTPS", "v1.3.24", "tabtps-spigot-1.3.24.jar")
-        // Spark
-        // url("https://ci.lucko.me/job/spark/430/artifact/spark-bukkit/build/libs/spark-1.10.85-bukkit.jar")
         // PlaceholderAPI
         // hangar("PlaceholderAPI", "2.11.5")
         // MiniPlaceholders
-        github("MiniPlaceholders", "MiniPlaceholders", "2.2.4", "MiniPlaceholders-Paper-2.2.4.jar")
+        github("MiniPlaceholders", "MiniPlaceholders", "2.3.0", "MiniPlaceholders-Paper-2.3.0.jar")
         // github("MiniPlaceholders", "PlaceholderAPI-Expansion", "1.2.0", "PlaceholderAPI-Expansion-1.2.0.jar")
         github("MiniPlaceholders", "Player-Expansion", "1.2.0", "MiniPlaceholders-Player-Expansion-1.2.0.jar")
         github("MiniPlaceholders", "Expressions-Expansion", "1.2.0", "Expressions-Expansion-1.2.0.jar")
-        github("ViaVersion", "ViaVersion", "5.0.1", "ViaVersion-5.0.1.jar")
     }
 
     compileJava {
@@ -90,7 +82,7 @@ tasks {
     }
 
     runServer {
-        minecraftVersion("1.20.6")
+        minecraftVersion("1.21.1")
 
         downloadPlugins {
             downloadPlugins.from(paperPlugins)
